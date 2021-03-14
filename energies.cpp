@@ -85,18 +85,25 @@ double useMigrationMatrices(TH2D* hist, double Ev) {
 }
 
 
-int energies(char* filename, string outdir, bool clas_maps, bool do_osc, bool clas_feeddown, char* clasfile, char* hist, bool xbcut, bool qecut) {
+int energies(string filepath, string outdir, bool clas_maps, bool do_osc, bool clas_feeddown, char* clasfile, char* hist, bool xbcut, bool qecut) { //command line inputs for the run_energies.exe 
 	
-	//Select file options: 
-	char* NAME = filename; //source file name and save name basis
-	string SRCPATH = "energy_rec/"; //path to source file
+	//Select file options:
+
+        string FILEPATH = filepath; //sets a string to thefile path to the root file specified when you input filepath in the command line
+	//cout << FILEPATH << endl;
+	//char* NAME = filename; //source file name and save name basis
+	//string SRCPATH = "/macros/energy_rec/"; //path to source file
 	string PATH = "energy_rec/" + outdir; //path to save directory
-	const string READNAME = string(NAME)+".root/gst"; //makes filename to access GST
+	//const string READNAME = string(NAME)+".root/gst"; //makes filename to access GST
+	const string READPATH = string(FILEPATH)+"/gst";
+
 	Double_t m_l = 0.105658; //0.000510999 for electron, 0.105658 for muon
 	Double_t beam_energy = 1.161; //GeV
-	cout << filename << endl;	
-	cout << (string(SRCPATH)+READNAME).c_str() << endl;
-	cout << PATH << endl;
+
+	//cout << filename << endl;
+	//cout << filepath << endl; //print filepath
+	//cout << (string(SRCPATH)+READNAME).c_str() << endl;
+	cout << PATH << endl; //print path to save directory
 	if (do_osc) { cout << "oscillating" << endl; } else { cout << "not oscillating" << endl; }
 	if (qecut) { cout << "using QE cuts" << endl; } else { cout << "no QE cuts" << endl; }
 	if (xbcut) { cout << "using xb cut" << endl; } else { cout << "no xb cut" << endl; }
@@ -128,7 +135,7 @@ int energies(char* filename, string outdir, bool clas_maps, bool do_osc, bool cl
 	bool cut_flags[CUTS_NUM] = {false}; 	//These flags will be turned true if an event passes the cuts
 	char const* cut_names[CUTS_NUM] = {""};
 	//Cut options: true == cut is taken
-	cut_switches[CC_cut] = true;	 //charged-current events only: turn on for nu, turn off for e- events (because nc==0 && cc==0 for them)! 
+	cut_switches[CC_cut] = false;	 //charged-current events only: turn on for nu, turn off for e- events (because nc==0 && cc==0 for them)! 
 	cut_switches[Q2_cut] = qecut; 	 //Q2 > Q2_cutoff (1.161: Q2 > 0.1 , 2.261: Q2 > 0.4 , 4.461: Q2 > 0.8)
 	cut_switches[p_cut] = qecut; 	 //events that have exactly one proton with momentum > 0.3 GeV/c and no other charged particles with momentum > p_cutoff
 	cut_switches[W_cut] = qecut;      //invariant mass W < W_cutoff (GeV)
@@ -165,7 +172,7 @@ int energies(char* filename, string outdir, bool clas_maps, bool do_osc, bool cl
 	const double W_cutoff = 2.0;  //GeV
 	const double bjx_cutoff = 0.2;
 	const double Ev_lower = 0;
-	const double Ev_upper = 10;
+       	const double Ev_upper = 10;
 	
 	// --------- PHYSICAL CONSTANTS (from NIST unless otherwise specified) --------- 
 	const Double_t Eb = 0.025;	//binding energies from Afro: 0.025 for 12C, 0.04 for 40Ar, 0.036 for 56Fe
@@ -222,8 +229,11 @@ int energies(char* filename, string outdir, bool clas_maps, bool do_osc, bool cl
 	TH2D *matrix_data = (TH2D*)matfile->Get("DT12CMigrationMatrix");
 
 	TChain *tree = new TChain(); //for whole-directory processing
-	tree -> Add((string(SRCPATH)+READNAME).c_str(),0); //get tree
+	//tree -> Add((string(SRCPATH)+READNAME).c_str(),0); //get tree
+	tree -> Add((string(READPATH)).c_str(),0); //get tree from source file
+	cout << (string(READPATH)).c_str() << endl;
 	Long64_t nentries = tree->GetEntries(); //For troubleshooting, can set to 10 eventsi
+        //cout<< "Number of entries is" <<nentries<<endl;	
 	//nentries = 10; //This is TEMPORARY for debugging!
 	Double_t Ev;
 	Double_t Ev_fd;
@@ -241,7 +251,7 @@ int energies(char* filename, string outdir, bool clas_maps, bool do_osc, bool cl
 	        if(nf>maxNF){
 	            maxNF = nf;
 	        }
-	}
+      	}
 	Double_t Ef[maxNF];
 	Int_t pdgf[maxNF];
 	Double_t pxf[maxNF], pyf[maxNF], pzf[maxNF];
@@ -293,13 +303,14 @@ int energies(char* filename, string outdir, bool clas_maps, bool do_osc, bool cl
 	tree -> SetBranchAddress("wght", &wght);
 	
 	double HMAX = 12.0;
-	double BINS = 120;
+	double BINS = 280;
 	// variable binning for 	
 	int n_bins;
 	double *x_values;
 	double *x_qe;
 	if(beam_energy>1. && beam_energy<2.){
-		n_bins=38;
+	  //cout<< "beam energy thing" <<beam_energy <<endl;
+	        n_bins=38;
 		x_values = new double[n_bins+1]; 
 		x_qe = new double[n_bins+1];
 		for (int i=0;i<=17;i++) { 
@@ -359,11 +370,14 @@ int energies(char* filename, string outdir, bool clas_maps, bool do_osc, bool cl
 		cut_flags[p_cut] = true;    //passes unless proved otherwise
 		cut_flags[pion_cut] = true; //passes unless proved otherwise
 
-		
+		//	cout << "passes QE_fp" <<cut_flags[QE_fp_cut]<<endl;
+
+
+
 		TVector3 lP(pxl, pyl, pzl);		//get lepton information
 		double leptonP = lP.Mag();
 		double leptonCos = lP.CosTheta();
-        double leptonPhi = lP.Phi() + TMath::Pi();
+		double leptonPhi = lP.Phi() + TMath::Pi();
 		double E_QE = ( squared(m_n) - squared(m_p - Eb) - squared(m_l) + 2*(m_p - Eb)*El ) / ( 2*( m_p - Eb - El + leptonP * leptonCos ) );
 		
 		double pP = 0;			//proton momentum
@@ -471,17 +485,22 @@ int energies(char* filename, string outdir, bool clas_maps, bool do_osc, bool cl
 
 		double cal_res = (calE - Ev) / Ev;
 		double fd_res = (Ev_fd - Ev) / Ev;
-
+                
 
 		// --------- FILL HISTOGRAMS --------- 
 		//Determine if event passed all implemented cuts
 		bool pass = true;
-		for(int k = 0; k < CUTS_NUM; k++) {
+		//cout <<"event number =" << i << " ";
+		for(int k = 0; k < CUTS_NUM; k++) 
+		  {//if(cut_switches[k]) cout << k << ":" << cut_flags[k]<<" ";  
 			if(cut_switches[k]==true && cut_flags[k]==false) {
 				pass = false;
 			}
 		}
+                //cout << endl;
+		//cout <<"event number =" << i <<endl;
 		if (pass == true) {
+                        
 			//if (clasdata == false) {
 				hEv -> Fill(Ev, weight);		
 			//}
@@ -492,8 +511,7 @@ int energies(char* filename, string outdir, bool clas_maps, bool do_osc, bool cl
 			hEQE -> Fill(E_QE, weight);		
 			hcal -> Fill(calE, weight);
 			hres_cal -> Fill(cal_res, weight);
-			hres_fd -> Fill(fd_res, weight);
-			
+			hres_fd -> Fill(fd_res, weight);	
 			// hcomp -> Fill(Ev, calE, weight);
 			
 			if (qel == true) {		
@@ -516,6 +534,8 @@ int energies(char* filename, string outdir, bool clas_maps, bool do_osc, bool cl
 		}
 	}
 	delete gRandom;
+	//cout<<"The neutrino energy is "<<Ev<<endl;
+        //cout<<x<<endl;
 	// I have commented out the part where the code outputs .txt files as I will not be needing them.
       	//.txt output
 	//	textOut(PATH, "EQE.txt", hEQE);
@@ -538,7 +558,11 @@ int energies(char* filename, string outdir, bool clas_maps, bool do_osc, bool cl
 	//textOut(PATH, "RESCAL.txt", hres_cal);	
 
 
-	string fileName = PATH+"energy_reconstruction_"+NAME+".root";
+	//string fileName = PATH+"energy_reconstruction_"+NAME+".root";
+	//rootFILEPATHNoPath=rootFILEPATH.substr(rootFILEPATH.find_last_of("/")+1);
+	string FILEPATHNoPath = FILEPATH.substr(FILEPATH.find_last_of("/")+1); //gets the filename from filepath
+        string fileName = PATH+string(FILEPATHNoPath)+".root";
+
 	TFile *output = new TFile(fileName.c_str(),"RECREATE");
 	
 	hEv -> Write();

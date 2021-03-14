@@ -67,5 +67,5 @@ int main(int argc, char *argv[]) {
 			strcpy(hist, "");
 			break;	
 	}
-	energies(filename, argv[2], !strcmp(argv[3],"1"), !strcmp(argv[4],"1"), !strcmp(argv[5],"1"), clasfile, hist, !strcmp(argv[7],"1"), !strcmp(argv[8],"1"));
+	energies(argv[1], argv[2], !strcmp(argv[3],"1"), !strcmp(argv[4],"1"), !strcmp(argv[5],"1"), clasfile, hist, !strcmp(argv[7],"1"), !strcmp(argv[8],"1"));
 }
