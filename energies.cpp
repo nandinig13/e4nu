@@ -93,12 +93,13 @@ int energies(string filepath, string outdir, bool clas_maps, bool do_osc, bool c
 	//cout << FILEPATH << endl;
 	//char* NAME = filename; //source file name and save name basis
 	//string SRCPATH = "/macros/energy_rec/"; //path to source file
-	string PATH = "energy_rec/" + outdir; //path to save directory
+	string save = "Fe56energies_no_smearing";
+	string PATH = "energy_rec/" + save; //path to save directory, change after the + to what you want it saves as
 	//const string READNAME = string(NAME)+".root/gst"; //makes filename to access GST
 	const string READPATH = string(FILEPATH)+"/gst";
 
-	Double_t m_l = 0.105658; //0.000510999 for electron, 0.105658 for muon
-	Double_t beam_energy = 1.161; //GeV
+	Double_t m_l = 0.000510999; //0.000510999 for electron, 0.105658 for muon
+	Double_t beam_energy = 2.261; //GeV
 
 	//cout << filename << endl;
 	//cout << filepath << endl; //print filepath
@@ -175,12 +176,13 @@ int energies(string filepath, string outdir, bool clas_maps, bool do_osc, bool c
        	const double Ev_upper = 10;
 	
 	// --------- PHYSICAL CONSTANTS (from NIST unless otherwise specified) --------- 
-	const Double_t Eb = 0.025;	//binding energies from Afro: 0.025 for 12C, 0.04 for 40Ar, 0.036 for 56Fe
+	const Double_t Eb = 0.036;	//binding energies from Afro: 0.025 for 12C, 0.04 for 40Ar, 0.036 for 56Fe
 	const Double_t m_p =  0.938272; //mass of proton
 	const Double_t m_n =  0.939565; //mass of neutron
 	const Double_t m_pic = 0.13958; //mass of charged pion https://journals.aps.org/pr/abstract/10.1103/PhysRev.163.1451 
 	const Double_t m_pi0 = 0.13498; //(GeV/c^2) mass of neutral pion (wikipedia, couldn't find better)
 	const Double_t fine_struc_const = 1./137.035999139;
+	//binding energies: 34 for , 30 for 
 
 
 	// --------- OSCILLATION SETUP & PARAMETERS -----------------
@@ -436,8 +438,8 @@ int energies(string filepath, string outdir, bool clas_maps, bool do_osc, bool c
 		double smear_lP = gRandom->Gaus(leptonP,reso_e*leptonP);
 		double smear_El = TMath::Sqrt(m_l*m_l+smear_lP*smear_lP);
 		double smear_pK = TMath::Sqrt(m_p*m_p+smear_pP*smear_pP) - m_p;
-		double calE = smear_El + smear_pK + Eb;
-		// double calE = El + protonK + Eb;
+		//double calE = smear_El + smear_pK + Eb; //smear calorimetric one
+		double calE = El + protonK + Eb; //don't smear
 		
 		// ------ CALCULATE WEIGHTS ---------
 		// using CLAS acceptance data
@@ -561,7 +563,8 @@ int energies(string filepath, string outdir, bool clas_maps, bool do_osc, bool c
 	//string fileName = PATH+"energy_reconstruction_"+NAME+".root";
 	//rootFILEPATHNoPath=rootFILEPATH.substr(rootFILEPATH.find_last_of("/")+1);
 	string FILEPATHNoPath = FILEPATH.substr(FILEPATH.find_last_of("/")+1); //gets the filename from filepath
-        string fileName = PATH+string(FILEPATHNoPath)+".root";
+	std::cout << "file no path: " << FILEPATHNoPath << std::endl;
+        string fileName = PATH+string(FILEPATHNoPath);
 
 	TFile *output = new TFile(fileName.c_str(),"RECREATE");
 	
