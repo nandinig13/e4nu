@@ -58,7 +58,8 @@ int findCharge(int pdg) {
 
 void textOut(string PATH, string name, TH1D* hist) {
 	ofstream out;
-	string savename = PATH + name;
+	//string savename = PATH + name;
+	string savename = save;
 	out.open(savename.c_str());
 	for (int j=0; j < hist->GetNbinsX(); j++){
 		out << hist->GetBinCenter(j+1) << "  ";
@@ -93,7 +94,7 @@ int energies(string filepath, string outdir, bool clas_maps, bool do_osc, bool c
 	//cout << FILEPATH << endl;
 	//char* NAME = filename; //source file name and save name basis
 	//string SRCPATH = "/macros/energy_rec/"; //path to source file
-	string save = "Fe56energies_no_smearing";
+	string save = "C12_energies_2.2GeV";
 	string PATH = "energy_rec/" + save; //path to save directory, change after the + to what you want it saves as
 	//const string READNAME = string(NAME)+".root/gst"; //makes filename to access GST
 	const string READPATH = string(FILEPATH)+"/gst";
@@ -176,7 +177,7 @@ int energies(string filepath, string outdir, bool clas_maps, bool do_osc, bool c
        	const double Ev_upper = 10;
 	
 	// --------- PHYSICAL CONSTANTS (from NIST unless otherwise specified) --------- 
-	const Double_t Eb = 0.036;	//binding energies from Afro: 0.025 for 12C, 0.04 for 40Ar, 0.036 for 56Fe
+	const Double_t Eb = 0.025;	//binding energies from Afro: 0.025 for 12C, 0.04 for 40Ar, 0.036 for 56Fe
 	const Double_t m_p =  0.938272; //mass of proton
 	const Double_t m_n =  0.939565; //mass of neutron
 	const Double_t m_pic = 0.13958; //mass of charged pion https://journals.aps.org/pr/abstract/10.1103/PhysRev.163.1451 
@@ -438,8 +439,8 @@ int energies(string filepath, string outdir, bool clas_maps, bool do_osc, bool c
 		double smear_lP = gRandom->Gaus(leptonP,reso_e*leptonP);
 		double smear_El = TMath::Sqrt(m_l*m_l+smear_lP*smear_lP);
 		double smear_pK = TMath::Sqrt(m_p*m_p+smear_pP*smear_pP) - m_p;
-		//double calE = smear_El + smear_pK + Eb; //smear calorimetric one
-		double calE = El + protonK + Eb; //don't smear
+		double calE = smear_El + smear_pK + Eb; //smear calorimetric one
+		//double calE = El + protonK + Eb; //don't smear
 		
 		// ------ CALCULATE WEIGHTS ---------
 		// using CLAS acceptance data
