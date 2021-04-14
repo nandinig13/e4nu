@@ -285,7 +285,7 @@ int energies(string filepath, string outdir, bool clas_maps, bool do_osc, bool c
 	tree -> SetBranchStatus("cc", 1);
 	tree -> SetBranchStatus("wght", 1);
 
-	tree -> SetBranchAddress("Ev", &Ev);
+	tree -> SetBranchAddress("Ev", &Ev); //puts the variable in the & address into the "" branch (they have the same name to make it less confusing)
 	tree -> SetBranchAddress("El", &El);	
 	tree -> SetBranchAddress("pxl", &pxl);	
 	tree -> SetBranchAddress("pyl", &pyl);	
@@ -357,9 +357,9 @@ int energies(string filepath, string outdir, bool clas_maps, bool do_osc, bool c
 
 	for( Long64_t i = 0; i < nentries ; i++) {
 		
-		tree -> GetEntry(i);
+		tree -> GetEntry(i); 
 
-		//MAKE CUTS: determine if the ith event passes available cuts
+		//MAKE CUTS: determine if the ith event passes available cuts //can maybe do this with if statements
 		cut_flags[QE_fp_cut] = (nf==1 && pdgf[0]==2212);
 		// cut_flags[Q2_cut] = (Q2 > Q2_cutoff);
 		cut_flags[Q2_cut] = ((Ev < 1.5 && Q2 > Q2_cutoff_1_161) || (Ev >= 1.5 && Q2 > Q2_cutoff_2_261));
@@ -567,14 +567,17 @@ int energies(string filepath, string outdir, bool clas_maps, bool do_osc, bool c
 	std::cout << "file no path: " << FILEPATHNoPath << std::endl;
         string fileName = PATH+string(FILEPATHNoPath);
 
-	TFile *output = new TFile(fileName.c_str(),"RECREATE");
+	TFile *output = new TFile(fileName.c_str(),"RECREATE"); //makes the file writeable, root can only have 1 open writable file at a time
 	
 	hEv -> Write();
 	hEQE -> Write();
 	hcal -> Write();
 	hcomp -> Write();
 	
-	if (clasdata == true) { clashist->Write(); hEv_fd->Write();} 
+	if (clasdata == true) {
+		 clashist->Write();
+		  hEv_fd->Write();
+	} 
 	
 	hEv_qe -> Write();
 	hEv_res -> Write();
