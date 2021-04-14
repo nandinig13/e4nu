@@ -24,7 +24,7 @@ R__LOAD_LIBRARY(WrappedProb3++.20121225.so)
 
 using namespace std;
 
-//PHYSICAL CONSTANTS                                                              
+//PHYSICAL CONSTANTS      //can maybe one day put these in a header                                                        
 const Double_t ELECTRON_MASS= 0.00051099; //Gev 
 const Double_t MUON_MASS= 0.105658; //Gev     
 const Double_t BEAM_ENERGY = 1.161; //GeV  //Change for different beam energies
@@ -69,8 +69,8 @@ int nikm; //number of initial state K-
 int nik0; //number of initial state K0  
 int tgt; //pdg code of nuclear target
 int hitnuc; //hit nucleon pdg code
-int cc; //is it a charged current event?
-int nc;
+bool cc; //is it a charged current event?
+bool nc;
 int resid;
 int em;
 int nres_events;
@@ -82,10 +82,10 @@ int n1ip1ipim_events;
 int n1ip3ipi0_events;
 int n1in1ipim1ipip1ipi0_events;
 int n1in1ipim1ipip_events;
-
 int nproton;
 int nneutron;
 
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 enum CutID //enumerated type
 {
   Q2_CUT, //Q2 > Q2_cutoff
@@ -165,7 +165,7 @@ string GetTargetString(TTree *tree)
   int nProtons;
   string targetString="";
   tree->SetBranchStatus("Z", 1);
-  tree->SetBranchAddress("Z", &nProtons); // The number of protons in the target nucleus will tell us what element it is. Possible pitfalls - there COULD be scattering from atomic electrons but that is quite rare, and it's possible that instead of simulating from a single target material we could scatter from a complex detector made of many materials - but I don't think your simulation has that. You can check by histogramming Z - if it's the same for every entry then you are good.
+  tree->SetBranchAddress("Z", &nProtons);
   tree->GetEntry();
   switch (nProtons)
   {
@@ -179,10 +179,10 @@ string GetTargetString(TTree *tree)
   return targetString;
 }
 
-
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //MAIN FUNCTION
-int func (string inFileName, string outdir){ //not taking in any complicated parameters yet
+int func (string inFileName, string outdir, string tester){ //not taking in any complicated parameters yet
 
   //FILEPATH = filepath ... maybe try and cout without the whole path to look nicer
   cout << "ROOT file being analysed:" << inFileName << endl;
@@ -197,7 +197,8 @@ TFile *f = new TFile(inFileName.c_str());
 
 //NUMBER OF ENTRIES
 Long64_t nentries = tree->GetEntries();
-//nentries = 100; //for debugging only
+if tester == "test"{
+  nentries = 100;} //for debugging
 
   //WHICH LEPTON?
   bool isElectronMode = CheckIfElectrons(tree);
@@ -206,7 +207,9 @@ Long64_t nentries = tree->GetEntries();
   string targetString = GetTargetString(tree);
 
   // PRINT OUT WHAT SORT OF SCATTERING IT IS
+  cout<<endl;
   cout<<(isElectronMode?"Electron":"Neutrino")<< " scattering on "<<targetString<<endl;
+  cout<<endl;
 
 //CUTS
   vector<Cut*> cuts;
@@ -613,12 +616,13 @@ Long64_t nentries = tree->GetEntries();
 
     delete gRandom;
 
-
-  string  PATH = "plots/" + outdir;
+  //string targetString = GetTargetString(tree);
+  string  PATH = "nanPlots/" + outdir;
   string filename_nopath = inFileName.substr(inFileName.find_last_of("/")+1); //gets filename from filepath
   string outFileName = PATH+string(filename_nopath);
+  //string outFileName = PATH + "energies";
   //  TFile *output = new TFile(inFileName.c_str(),"RECREATE"); //open a file
-  TFile *output = new TFile(outFileName.c_str(),"RECREATE");
+  TFile *output = new TFile(outFileName.c_str(),"RECREATE"); //makes the file writeable, only 1 file can be open and writeable at a time in ROOT
     hEv -> Write();
     hcal -> Write();
     hEv_qe -> Write();
@@ -636,6 +640,6 @@ Long64_t nentries = tree->GetEntries();
     
     output -> Close();
  
- cout << "Histograms filled. Output closed.!" << endl;
+ cout << "Histograms filled. Output closed!" << endl;
  return 0;
 }

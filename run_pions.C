@@ -9,9 +9,10 @@ int main(int argc, char *argv[]) {
 
   string outdir = Form("%s",argv[2]);
 
+  string tester = Form("%s", argv[3]);
   cout << filepath << " " <<outdir << endl;
  
-  func(filepath, outdir);
+  func(filepath, outdir, tester);
   
 }
 
