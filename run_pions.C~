@@ -1,0 +1,11 @@
+#include "pions.cpp"
+#include <string>
+#include <iostream>
+using namespace std;
+
+int main(int argc, char *argv[]) {  
+  string filepath;
+  string outdir;
+  pions(argv[1], argv[2]);
+}
+

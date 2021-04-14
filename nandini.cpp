@@ -197,8 +197,8 @@ TFile *f = new TFile(inFileName.c_str());
 
 //NUMBER OF ENTRIES
 Long64_t nentries = tree->GetEntries();
-if tester == "test"{
-  nentries = 100;} //for debugging
+ if (tester == "test"){
+     nentries = 100;} //for debugging
 
   //WHICH LEPTON?
   bool isElectronMode = CheckIfElectrons(tree);
@@ -209,6 +209,7 @@ if tester == "test"{
   // PRINT OUT WHAT SORT OF SCATTERING IT IS
   cout<<endl;
   cout<<(isElectronMode?"Electron":"Neutrino")<< " scattering on "<<targetString<<endl;
+  cout<<"Number of entries:" << nentries << endl;
   cout<<endl;
 
 //CUTS
@@ -416,6 +417,12 @@ if tester == "test"{
   gRandom = new TRandom3();
   gRandom->SetSeed(10);
 
+  //SIGNAL EVENT COUNTER
+  int QESignalEvents = 0;
+  int MECSignalEvents = 0;
+  int RESSignalEvents = 0;
+  int DISSignalEvents = 0;  
+    
   for( Long64_t i = 0; i < nentries ; i++)
   {
       tree -> GetEntry(i);
@@ -543,12 +550,12 @@ if tester == "test"{
 	        passescuts = false;
 	    } 
     }
-      
-    
+
     if (passescuts == true){
         hEv -> Fill(Ev, weight);
 
              if(qel == true){
+                 QESignalEvents += 1;
                  hEv_qe -> Fill(Ev, weight);
                  hcal_qe -> Fill(calE,weight);
                  hEQE_qe -> Fill(E_QE, weight);
@@ -565,6 +572,7 @@ if tester == "test"{
             }
     
              if(res == true){
+                 RESSignalEvents += 1;
                  hEv_res -> Fill(Ev, weight);
                  hcal_res -> Fill(calE, weight);
                  hEQE_res -> Fill(E_QE, weight);
@@ -581,6 +589,7 @@ if tester == "test"{
             }
 
              if(mec == true){
+                 RESSignalEvents += 1;
                  hEv_mec -> Fill(Ev, weight);
                  hcal_mec -> Fill(calE, weight);
                  hEQE_mec -> Fill(E_QE, weight);
@@ -596,9 +605,10 @@ if tester == "test"{
                  //hnipim_mec -> Fill(nipim, weight);
              } 
              if(dis == true){
-	            hEv_dis -> Fill(Ev, weight);
-                hcal_dis -> Fill(calE, weight);
-                hEQE_dis -> Fill(E_QE, weight);
+               DISSignalEvents += 1;
+	             hEv_dis -> Fill(Ev, weight);
+               hcal_dis -> Fill(calE, weight);
+               hEQE_dis -> Fill(E_QE, weight);
 	            //hcal_dis_pip -> Fill(calE, weight);
 	            //hkin_dis_pip -> Fill(kinE, weight);
 	            //hnfp_dis -> Fill(nfp, weight);
@@ -616,6 +626,13 @@ if tester == "test"{
 
     delete gRandom;
 
+  //PRINTING FRACTIONAL CONTRIBUTIONS
+  std::cout << std::endl << "QE Fractional Contribution = " << int(double(QESignalEvents) / double(nentries) *100.) << " \%" << std::endl;
+	std::cout << std::endl << "MEC Fractional Contribution = " << int(double(MECSignalEvents) / double(nentries)*100.) << " \%" << std::endl;
+	std::cout << std::endl << "RES Fractional Contribution = " << int(double(RESSignalEvents) / double(nentries)*100.) << " \%" << std::endl;
+	std::cout << std::endl << "DIS Fractional Contribution = " << int(double(DISSignalEvents) / double(nentries)*100.) << " \%" << std::endl;
+  
+  
   //string targetString = GetTargetString(tree);
   string  PATH = "nanPlots/" + outdir;
   string filename_nopath = inFileName.substr(inFileName.find_last_of("/")+1); //gets filename from filepath
