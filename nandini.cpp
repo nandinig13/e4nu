@@ -98,10 +98,15 @@ enum CutID //enumerated type
   FINAL_STATE_NEUTRAL_PION_CUT, // final state neutral pion cut
 };
 
+Double_t squared(Double_t num) {
+  return TMath::Power(num, 2);
+}
+
+
 //CUT CLASS
 class Cut {
 private:
-  string cutString_; // You can do something here like with the text one
+  string cutString_;
   string titleText_;
   CutID cutID_; //make enum for CutID where we add cuts
 public:
@@ -112,14 +117,13 @@ public:
   bool PassesCut();//returns true or false depending on if cut id passes e.g. TRUE_RES_CUT=true then give res...
 };
 
-Cut::Cut(string _titleString, string _cutString, CutID _cutID ) //etc
+Cut::Cut(string _titleString, string _cutString, CutID _cutID)
 {
   this->titleText_=_titleString;
   this->cutString_=_cutString;
-  this->cutID_=_cutID;//
+  this->cutID_=_cutID;
 }
 
-// Get the text and string
 string Cut::GetTitleText()
 {
   return this->titleText_;
@@ -133,14 +137,14 @@ bool Cut::PassesCut()
   //bool _cutID = true; 
   switch (cutID_)
   {
-  case FINAL_STATE_CHARGED_PION: return  (nfpim + nfpip == 1); 
-         break; // 1 final state pion
-  case FINAL_STATE_NEUTRAL_PION: return (nfpi0 ==1);
-         break;
-  case FINAL_STATE_PROTON: return (nfp == 1); 
-         break; // 1 final state proton
-  case FINAL_STATE_NEUTRON: return (nfn == 0);
-         break;
+    //case FINAL_STATE_CHARGED_PION: return  (nfpim + nfpip == 1); 
+    //     break; // 1 final state pion
+    //case FINAL_STATE_NEUTRAL_PION: return (nfpi0 ==1);
+    //   break;
+  case FINAL_STATE_PROTON_CUT: return (nfp == 1); 
+       break; // 1 final state proton
+       //case FINAL_STATE_NEUTRON: return (nfn == 0);
+       //break;
      default: return true;
   }
 }
@@ -186,7 +190,7 @@ int func (string inFileName, string outdir){ //not taking in any complicated par
 //Could put couts here of which cuts have been specified by the command line arguments
 
 //READ THE ROOT FILE AND LOAD THE GST TREE
-T File *f = new TFile(inFileName.c_str());
+TFile *f = new TFile(inFileName.c_str());
   f->ls();
   cout << (string(inFileName)).c_str() << endl;
   TTree *tree = (TTree*) f->Get("gst");
@@ -202,7 +206,7 @@ Long64_t nentries = tree->GetEntries();
   string targetString = GetTargetString(tree);
 
   // PRINT OUT WHAT SORT OF SCATTERING IT IS
-  cout<<(isElectronMode?"Electron":"Neutrino")<< "scattering on"<<targetString<<endl;
+  cout<<(isElectronMode?"Electron":"Neutrino")<< " scattering on "<<targetString<<endl;
 
 //CUTS
   vector<Cut*> cuts;
@@ -332,10 +336,10 @@ Long64_t nentries = tree->GetEntries();
   TH1D *hcal_dis = new TH1D("cal_dis", "Calorimetric energy reconstruction in DIS events", Bins, 0.0, Histo_xmax);
   TH1D *hcal_mec = new TH1D("cal_mec", "Calorimetric energy reconstruction in MEC events", Bins, 0.0, Histo_xmax);
 
-  TH1D *hEQE_qe = new TH1D("hEQE_qe", "Quasielastic energy reconstruction in QE events", BINS, 0.0, Histo_xmax);
-  TH1D *hEQE_res = new TH1D("hEQE_res", "Quasielastic energy reconstruction in resonant events", BINS, 0.0, Histo_xmax);
-  TH1D *hEQE_dis = new TH1D("hEQE_dis", "Quasielastic energy reconstruction in DIS events", BINS, 0.0, Histo_xmax);
-  TH1D *hEQE_mec = new TH1D("hEQE_mec", "Quasielastic energy reconstruction in MEC events", BINS, 0.0, Histo_xmax);
+  TH1D *hEQE_qe = new TH1D("hEQE_qe", "Quasielastic energy reconstruction in QE events", Bins, 0.0, Histo_xmax);
+  TH1D *hEQE_res = new TH1D("hEQE_res", "Quasielastic energy reconstruction in resonant events", Bins, 0.0, Histo_xmax);
+  TH1D *hEQE_dis = new TH1D("hEQE_dis", "Quasielastic energy reconstruction in DIS events", Bins, 0.0, Histo_xmax);
+  TH1D *hEQE_mec = new TH1D("hEQE_mec", "Quasielastic energy reconstruction in MEC events", Bins, 0.0, Histo_xmax);
 
 /*
   TH1D *hcal_qe_pip = new TH1D("cal_qe_pip", "Calorimetric energy reconstruction in QE events with 1 pi+", Bins, 0.0, Histo_xmax);
@@ -477,7 +481,7 @@ Long64_t nentries = tree->GetEntries();
     double reso_p = 0.01; // smearing for the proton
     double reso_e = 0.005; // smearing for the electron
     double reso_pi = 0.007; //smearing for pions
-    if(beam_energy == 1.161) {  //justification for this in Anjali's paper - lower energy has more error
+    if(BEAM_ENERGY == 1.161) {  //justification for this in Anjali's paper - lower energy has more error
 			reso_p = 3*reso_p; reso_e = 3*reso_e; reso_pi = 3*reso_pi;
 		}
 
@@ -512,9 +516,9 @@ Long64_t nentries = tree->GetEntries();
     //cout <<kinE<<endl;  
 
 //QUASI-ELASTIC ENERGY RECONSTRUCTION
-    double E_QE = ( squared(m_n) - squared(m_p - Eb) - squared(m_l) + 2*(m_p - Eb)*El ) / ( 2*( m_p - Eb - El + leptonP * leptonCos ) );
+    double E_QE = ( squared(NEUTRON_MASS) - squared(PROTON_MASS - Eb) - squared(m_l) + 2*(PROTON_MASS - Eb)*smear_El ) / ( 2*( PROTON_MASS - Eb - smear_El + leptonP * leptonCos ) );
 
-    //double weight = 1.0;
+    double weight = 1.0;
     //double weight_pim = 1.0;
     //double weight_pip = 1.0;
   
