@@ -164,7 +164,7 @@ string GetTargetString(TTree *tree)
 {
   int nProtons;
   string targetString="";
-  tree->SetBranchStatus("Z", 1);
+  tree->SetBranchStatus("Z", 1); 
   tree->SetBranchAddress("Z", &nProtons);
   tree->GetEntry();
   switch (nProtons)
@@ -215,13 +215,13 @@ Long64_t nentries = tree->GetEntries();
 //CUTS
   vector<Cut*> cuts;
     //cuts.push_back(new Cut("Bjorken x cut","TMath::Abs(x-1) < 0.2")); 
-    // cuts.push_back(new Cut("1p" , "1p", FINAL_STATE_PROTON));
-    // cuts.push_back(new Cut("1pi" , "1pi", FINAL_STATE_CHARGED_PION));
-    // cuts.push_back(new Cut("0n" , "0n", FINAL_STATE_NEUTRON));
-    // cuts.push_back(new Cut("0pi0", "0pi0", FINAL_STATE_NEUTRAL_PION));
+    //cuts.push_back(new Cut("1p" , "1p", FINAL_STATE_PROTON));
+    //cuts.push_back(new Cut("1pi" , "1pi", FINAL_STATE_CHARGED_PION));
+    //cuts.push_back(new Cut("0n" , "0n", FINAL_STATE_NEUTRON));
+    //cuts.push_back(new Cut("0pi0", "0pi0", FINAL_STATE_NEUTRAL_PION));
 
   string cutText="Cuts: ";
-  for (int i=0; i<cuts.size();i++) // It loops all your cuts
+  for (int i=0; i<cuts.size();i++) // Loops all your cuts
   {
     if (i>0)cutText+=" and ";
     cutText+=cuts.at(i)->GetTitleText();
@@ -433,7 +433,7 @@ Long64_t nentries = tree->GetEntries();
       
 
       double pP = 0;      //proton momentum
-      double protonK = 0;   //proton kinetic energy
+      double protonK = 0; //proton kinetic energy
       double pCos = 0;    //cosine of scattering angle 
       double pPhi = 0;    //phi
       int pCount = 0;
