@@ -368,6 +368,17 @@ Long64_t nentries = tree->GetEntries();
   TH1D *hkin_res_pim = new TH1D("kin_res_pim", "Kinematic energy reconstruction in RES events with 1 pi-", Bins, 0.0, Histo_xmax);
   TH1D *hkin_dis_pim = new TH1D("kin_dis_pim", "Kinematic energy reconstruction in DIS events with 1 pi-", Bins, 0.0, Histo_xmax);
   TH1D *hkin_mec_pim = new TH1D("kin_mec_pim", "Kinematic energy reconstruction in MEC events with 1 pi-", Bins, 0.0, Histo_xmax);
+
+  // --------- CLAS ACCEPTANCE MAPS -----------------
+//TFile* file_acceptance_1_161 = TFile::Open("maps/e2a_maps_12C_E_1_161.root");
+//TFile* file_acceptance_1_161_p = TFile::Open("maps/e2a_maps_12C_E_1_161_p.root");
+//TFile* file_acceptance_1_161_pip = TFile::Open("maps/e2a_maps_12C_E_1_161_pip.root");
+//TFile* file_acceptance_1_161_pim = TFile::Open("maps/e2a_maps_12C_E_1_161_pim.root");
+
+TFile* file_acceptance_2_261 = TFile::Open("maps/e2a_maps_12C_E_2_261.root");
+TFile* file_acceptance_2_261_p = TFile::Open("maps/e2a_maps_12C_E_2_261_p.root");
+TFile* file_acceptance_2_261_pip = TFile::Open("maps/e2a_maps_12C_E_2_261_pip.root");
+TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.root"); 
  
   //GAUSSIAN SMEARING
 
@@ -502,11 +513,29 @@ Long64_t nentries = tree->GetEntries();
     double weight = 1.0;
     double weight_pim = 0.0;
     double weight_pip = 0.0;
-    if (nfpip == 1){
+    if (nfpip >= 1){
       weight_pip=1.0;
     }
-    if (nfpim == 1){
+    if (nfpim >= 1){
       weight_pim=1.0;
+    }
+
+bool clas_acceptance = true;  //might want to pass this as an argument one day
+    if (clas_acceptance == true){
+      double e_acc_ratio = 1.0;
+      double p_acc_ratio = 1.0;
+      double pip_acc_ratio = 1.0;
+      double pim_acc_ratio = 1.0;
+
+	e_acc_ratio = acceptance_c(leptonP, leptonCos, leptonPhi, 11, file_acceptance_2_261);
+	p_acc_ratio = acceptance_c(pP, pCos, pPhi, 2212, file_acceptance_2_261_p);
+	pip_acc_ratio = acceptance_c(pipP, pipCos, pipPhi, 211, file_acceptance_2_261_pip);
+	pim_acc_ratio = acceptance_c(pimP, pimCos, pimPhi, -211, file_acceptance_2_261_pim);
+
+	weight_pip *= e_acc_ratio * p_acc_ratio * pip_acc_ratio;
+
+	weight_pim *= e_acc_ratio * p_acc_ratio * pim_acc_ratio;
+
     }
     
 //cout << "plus:" << nfpip << endl;
