@@ -216,8 +216,8 @@ Long64_t nentries = tree->GetEntries();
   vector<Cut*> cuts;
     //cuts.push_back(new Cut("Bjorken x cut","TMath::Abs(x-1) < 0.2")); 
     //cuts.push_back(new Cut("1p" , "1p", FINAL_STATE_PROTON_CUT));
-   // cuts.push_back(new Cut(">= 1p" , ">= 1p", FINAL_STATE_PROTON_CUT));
-    //cuts.push_back(new Cut("1pi" , "1pi", FINAL_STATE_CHARGED_PION_CUT)); //make sure 
+   cuts.push_back(new Cut(">= 1p" , ">= 1p", FINAL_STATE_PROTON_CUT));
+   cuts.push_back(new Cut("1pi" , "1pi", FINAL_STATE_CHARGED_PION_CUT)); //make sure 
    // cuts.push_back(new Cut("0n" , "0n", FINAL_STATE_NEUTRON_CUT));
    // cuts.push_back(new Cut("0pi0", "0pi0", FINAL_STATE_NEUTRAL_PION_CUT));
 
