@@ -27,7 +27,7 @@ using namespace std;
 //PHYSICAL CONSTANTS      //can maybe one day put these in a header                                                        
 const Double_t ELECTRON_MASS= 0.00051099; //Gev 
 const Double_t MUON_MASS= 0.105658; //Gev     
-const Double_t BEAM_ENERGY = 1.161; //GeV  //Change for different beam energies
+const Double_t BEAM_ENERGY = 2.261; //GeV  //Change for different beam energies
 const Double_t Eb = 0.025;//binding energies from Afro: 0.025 for 12C, 0.04 for 40Ar, 0.03 for 56Fe NEED TO CHECK VALIDITY                                                          
 const Double_t PROTON_MASS =  0.938272; //mass of proton                                           
 const Double_t NEUTRON_MASS =  0.939565; //mass of neutron                                        
@@ -137,15 +137,15 @@ bool Cut::PassesCut()
   //bool _cutID = true; 
   switch (cutID_)
   {
-    //case FINAL_STATE_CHARGED_PION: return  (nfpim + nfpip == 1); 
-    //     break; // 1 final state pion
-    //case FINAL_STATE_NEUTRAL_PION: return (nfpi0 ==1);
-    //   break;
-  case FINAL_STATE_PROTON_CUT: return (nfp == 1); 
+    case FINAL_STATE_CHARGED_PION_CUT: return  (nfpim + nfpip == 1); 
+         break; // 1 final state pion
+    case FINAL_STATE_NEUTRAL_PION_CUT: return (nfpi0 ==1);
+       break;
+    case FINAL_STATE_PROTON_CUT: return (nfp >= 1);  //changed from ==1 because too strict?
        break; // 1 final state proton
-       //case FINAL_STATE_NEUTRON: return (nfn == 0);
-       //break;
-     default: return true;
+    case FINAL_STATE_NEUTRON_CUT: return (nfn == 0);
+       break;
+    default: return true;
   }
 }
 
@@ -198,7 +198,7 @@ TFile *f = new TFile(inFileName.c_str());
 //NUMBER OF ENTRIES
 Long64_t nentries = tree->GetEntries();
  if (tester == "test"){
-     nentries = 100;} //for debugging
+     nentries = 20;} //for debugging
 
   //WHICH LEPTON?
   bool isElectronMode = CheckIfElectrons(tree);
@@ -215,10 +215,11 @@ Long64_t nentries = tree->GetEntries();
 //CUTS
   vector<Cut*> cuts;
     //cuts.push_back(new Cut("Bjorken x cut","TMath::Abs(x-1) < 0.2")); 
-    //cuts.push_back(new Cut("1p" , "1p", FINAL_STATE_PROTON));
-    //cuts.push_back(new Cut("1pi" , "1pi", FINAL_STATE_CHARGED_PION));
-    //cuts.push_back(new Cut("0n" , "0n", FINAL_STATE_NEUTRON));
-    //cuts.push_back(new Cut("0pi0", "0pi0", FINAL_STATE_NEUTRAL_PION));
+    //cuts.push_back(new Cut("1p" , "1p", FINAL_STATE_PROTON_CUT));
+    cuts.push_back(new Cut(">= 1p" , ">= 1p", FINAL_STATE_PROTON_CUT));
+    cuts.push_back(new Cut("1pi" , "1pi", FINAL_STATE_CHARGED_PION_CUT)); //make sure 
+   // cuts.push_back(new Cut("0n" , "0n", FINAL_STATE_NEUTRON_CUT));
+   // cuts.push_back(new Cut("0pi0", "0pi0", FINAL_STATE_NEUTRAL_PION_CUT));
 
   string cutText="Cuts: ";
   for (int i=0; i<cuts.size();i++) // Loops all your cuts
@@ -329,7 +330,8 @@ Long64_t nentries = tree->GetEntries();
   
   TH1D *hEv = new TH1D("Ev", cutText.c_str(), Bins, 0.0, Histo_xmax); //create a pointer to a histogram
   TH1D *hcal = new TH1D("Cal", "Calorimetric energy reconstruction", Bins, 0.0, Histo_xmax); 
-  
+  TH1D *hkin = new TH1D("Kin", "Kinematic energy reconstruction", Bins, 0.0, Histo_xmax);
+
   TH1D *hEv_qe = new TH1D("Ev_qe", "Lepton energy in QE events (GENIE)", Bins, 0.0, Histo_xmax);
   TH1D *hEv_res = new TH1D("Ev_res", "Lepton energy in RES events (GENIE)", Bins, 0.0, Histo_xmax);
   TH1D *hEv_dis = new TH1D("Ev_dis", "Lepton energy in DIS events (GENIE)", Bins, 0.0, Histo_xmax);
@@ -340,17 +342,12 @@ Long64_t nentries = tree->GetEntries();
   TH1D *hcal_dis = new TH1D("cal_dis", "Calorimetric energy reconstruction in DIS events", Bins, 0.0, Histo_xmax);
   TH1D *hcal_mec = new TH1D("cal_mec", "Calorimetric energy reconstruction in MEC events", Bins, 0.0, Histo_xmax);
 
-  TH1D *hEQE_qe = new TH1D("hEQE_qe", "Quasielastic energy reconstruction in QE events", Bins, 0.0, Histo_xmax);
-  TH1D *hEQE_res = new TH1D("hEQE_res", "Quasielastic energy reconstruction in resonant events", Bins, 0.0, Histo_xmax);
-  TH1D *hEQE_dis = new TH1D("hEQE_dis", "Quasielastic energy reconstruction in DIS events", Bins, 0.0, Histo_xmax);
-  TH1D *hEQE_mec = new TH1D("hEQE_mec", "Quasielastic energy reconstruction in MEC events", Bins, 0.0, Histo_xmax);
-
-/*
+  TH1D *hcal_pip = new TH1D("cal_pip", "Calorimetric energy reconstruction events with 1 pi+", Bins, 0.0, Histo_xmax);
   TH1D *hcal_qe_pip = new TH1D("cal_qe_pip", "Calorimetric energy reconstruction in QE events with 1 pi+", Bins, 0.0, Histo_xmax);
   TH1D *hcal_res_pip = new TH1D("cal_res_pip", "Calorimetric energy reconstruction in RES events with 1 pi+", Bins, 0.0, Histo_xmax);
   TH1D *hcal_dis_pip = new TH1D("cal_dis_pip", "Calorimetric energy reconstruction in DIS events with 1 pi+", Bins, 0.0, Histo_xmax);
   TH1D *hcal_mec_pip = new TH1D("cal_mec_pip", "Calorimetric energy reconstruction in MEC events with 1 pi+", Bins, 0.0, Histo_xmax);
-
+  TH1D *hcal_pim = new TH1D("cal_pim", "Calorimetric energy reconstruction events with 1 pi-", Bins, 0.0, Histo_xmax);
   TH1D *hcal_qe_pim = new TH1D("cal_qe_pim", "Calorimetric energy reconstruction in QE events with 1 pi-", Bins, 0.0, Histo_xmax);
   TH1D *hcal_res_pim = new TH1D("cal_res_pim", "Calorimetric energy reconstruction in RES events with 1 pi-", Bins, 0.0, Histo_xmax);
   TH1D *hcal_dis_pim = new TH1D("cal_dis_pim", "Calorimetric energy reconstruction in DIS events with 1 pi-", Bins, 0.0, Histo_xmax);
@@ -361,57 +358,17 @@ Long64_t nentries = tree->GetEntries();
   TH1D *hkin_res = new TH1D("kin_res", "Kinematic energy reconstruction in RES events", Bins, 0.0, Histo_xmax);
   TH1D *hkin_dis = new TH1D("kin_dis", "Kinematic energy reconstruction in DIS events", Bins, 0.0, Histo_xmax);
   TH1D *hkin_mec = new TH1D("kin_mec", "Kinematic energy reconstruction in MEC events", Bins, 0.0, Histo_xmax);
-  
+  TH1D *hkin_pip = new TH1D("kin_pip", "Kinematic energy reconstruction in events with 1 pi+", Bins, 0.0, Histo_xmax);  
   TH1D *hkin_qe_pip = new TH1D("kin_qe_pip", "Kinematic energy reconstruction in QE events with 1 pi+", Bins, 0.0, Histo_xmax);
   TH1D *hkin_res_pip = new TH1D("kin_res_pip", "Kinematic energy reconstruction in RES events with 1 pi+", Bins, 0.0, Histo_xmax);
   TH1D *hkin_dis_pip = new TH1D("kin_dis_pip", "Kinematic energy reconstruction in DIS events with 1 pi+", Bins, 0.0, Histo_xmax);
   TH1D *hkin_mec_pip = new TH1D("kin_mec_pip", "Kinematic energy reconstruction in MEC events with 1 pi+", Bins, 0.0, Histo_xmax);
-
+  TH1D *hkin_pim = new TH1D("kin_pim", "Kinematic energy reconstruction in events with 1 pi-", Bins, 0.0, Histo_xmax);
   TH1D *hkin_qe_pim = new TH1D("kin_qe_pim", "Kinematic energy reconstruction in QE events with 1 pi-", Bins, 0.0, Histo_xmax);
   TH1D *hkin_res_pim = new TH1D("kin_res_pim", "Kinematic energy reconstruction in RES events with 1 pi-", Bins, 0.0, Histo_xmax);
   TH1D *hkin_dis_pim = new TH1D("kin_dis_pim", "Kinematic energy reconstruction in DIS events with 1 pi-", Bins, 0.0, Histo_xmax);
   TH1D *hkin_mec_pim = new TH1D("kin_mec_pim", "Kinematic energy reconstruction in MEC events with 1 pi-", Bins, 0.0, Histo_xmax);
-*/
-   TH1D *hnfp_qe = new TH1D("nfp_qe", "number of final state protons in QE events", Bins, 0, 10);
-   TH1D *hnfp_res = new TH1D("nfp_res", "number of final state protons in RES events", Bins, 0, 10);
-  TH1D *hnfp_dis = new TH1D("nfp_dis", "number of final state protons in DIS events", Bins, 0, 10);
-  TH1D *hnfp_mec = new TH1D("nfp_mec", "number of final state protons in MEC events", Bins, 0, 10);
-
-   TH1D *hnfn_qe = new TH1D("nfn_qe", "number of final state neutrons in QE events", Bins, 0, 10);
-    TH1D *hnfn_res = new TH1D("nfn_res", "number of final state neutrons in RES events", Bins, 0, 10);
-  TH1D *hnfn_dis = new TH1D("nfn_dis", "number of final state neutrons in DIS events", Bins, 0, 10);
-  TH1D *hnfn_mec = new TH1D("nfn_mec", "number of final state neutrons in MEC events", Bins, 0, 10);
-
-  TH1D *hnfpip_qe = new TH1D("nfpip_qe", "number of final state pi+ in QE events", Bins, 0, 10);
-  TH1D *hnfpip_res = new TH1D("nfpip_res", "number of final state pi+ in RES events", Bins, 0, 10);
-  TH1D *hnfpip_dis = new TH1D("nfpip_dis", "number of final state pi+ in DIS events", Bins, 0, 10);
-  TH1D *hnfpip_mec = new TH1D("nfpip_mec", "number of final state pi+ in MEC events", Bins, 0, 10);
-
-  TH1D *hnfpim_qe = new TH1D("nfpim_qe", "number of final state pi- in QE events", Bins, 0, 10);
-  TH1D *hnfpim_res = new TH1D("nfpim_res", "number of final state pi- in RES events", Bins, 0, 10);
-  TH1D *hnfpim_dis = new TH1D("nfpim_dis", "number of final state pi- in DIS events", Bins, 0, 10);
-  TH1D *hnfpim_mec = new TH1D("nfpim_mec", "number of final state pi- in MEC events", Bins, 0, 10);
-  
-  TH1D *hnip_qe = new TH1D("nip_qe", "number of initial state protons in QE events", Bins, 0, 10);
-  TH1D *hnip_res = new TH1D("nip_res", "number of initial state protons in RES events", Bins, 0, 10);
-  TH1D *hnip_dis = new TH1D("nip_dis", "number of initial state protons in DIS events", Bins, 0, 10);
-  TH1D *hnip_mec = new TH1D("nip_mec", "number of initial state protons in MEC events", Bins, 0, 10);
-
-  TH1D *hnin_qe = new TH1D("nin_qe", "number of initial state neutrons in QE events", Bins, 0, 10);
-  TH1D *hnin_res = new TH1D("nin_res", "number of initial state neutrons in RES events", Bins, 0, 10);
-  TH1D *hnin_dis = new TH1D("nin_dis", "number of initial state neutrons in DIS events", Bins, 0, 10);
-  TH1D *hnin_mec = new TH1D("nin_mec", "number of initial state neutrons in MEC events", Bins, 0, 10);
-
-  TH1D *hnipip_qe = new TH1D("nipip_qe", "number of initial state pi+ in QE events", Bins, 0, 10);
-  TH1D *hnipip_res = new TH1D("nipip_res", "number of initial state pi+ in RES events", Bins, 0, 10);
-  TH1D *hnipip_dis = new TH1D("nipip_dis", "number of initial state pi+ in DIS events", Bins, 0, 10);
-  TH1D *hnipip_mec = new TH1D("nipip_mec", "number of initial state pi+ in MEC events", Bins, 0, 10);
-
-  TH1D *hnipim_qe = new TH1D("nipim_qe", "number of initial state pi- in QE events", Bins, 0, 10);
-  TH1D *hnipim_res = new TH1D("nipim_res", "number of initial state pi- in RES events", Bins, 0, 10);
-  TH1D *hnipim_dis = new TH1D("nipim_dis", "number of initilal state pi- in DIS events", Bins, 0, 10);
-  TH1D *hnipim_mec = new TH1D("nipim_mec", "number of initial state pi- in MEC events", Bins, 0, 10);
-
+ 
   //GAUSSIAN SMEARING
 
   gRandom = new TRandom3();
@@ -425,6 +382,11 @@ Long64_t nentries = tree->GetEntries();
     
   for( Long64_t i = 0; i < nentries ; i++)
   {
+        cout << "QE" << qel << endl;
+    cout << "res" << res << endl;
+    cout << "mec" << mec << endl;
+    cout << "dis" << dis << endl;
+
       tree -> GetEntry(i);
       TVector3 lP(pxl, pyl, pzl);   //get lepton information
       double leptonP = lP.Mag();
@@ -438,16 +400,16 @@ Long64_t nentries = tree->GetEntries();
       double pPhi = 0;    //phi
       int pCount = 0;
 
-      //double pipP = 0;      //pion+ momentum                                                       
-      //double pipK = 0;   //pion+ kinetic energy                                                  
-      //double pipCos = 0;    //cosine of scattering angle                                             
-      //double pipPhi = 0;    //phi  
+      double pipP = 0;      //pion+ momentum                                                       
+      double pipK = 0;   //pion+ kinetic energy                                                  
+      double pipCos = 0;    //cosine of scattering angle                                             
+      double pipPhi = 0;    //phi  
 
-      //double pimP = 0;      //pion- momemtum                                                                                                     
-      //double pimK = 0;   //pion- kinetic energy        
-      //double pimCos = 0;    //cosine of scattering angle                                                                                                                              
-      //double pimPhi = 0;    //phi                                                                                                                                                      
-      //double Epi = 0;
+      double pimP = 0;      //pion- momemtum                                                                                                     
+      double pimK = 0;   //pion- kinetic energy        
+      double pimCos = 0;    //cosine of scattering angle                                                                                                                              
+      double pimPhi = 0;    //phi                                                                                                                                                      
+      double Epi = 0;
 
     for(Int_t k=0; k<nf; k++) { //loop through k final particles
       int pdg = pdgf[k];
@@ -464,10 +426,10 @@ Long64_t nentries = tree->GetEntries();
         pCount +=1;
 	}
       }
-/* dont need this for now
+
 //SETTING VALS IF PI PLUS
       if (pdg == 211) {
-	if (kP > pipP){
+	if (kP > pipP){ // I think this ensures it is using the proton with max energy/momentum
 	  pipP = kP;
 	  pipCos = kVec.CosTheta();
           pipPhi = kVec.Phi() + TMath::Pi();
@@ -483,8 +445,6 @@ Long64_t nentries = tree->GetEntries();
         pimK = Ef[k] - PION_MASS;
         }
       }
-
-    */
     }
 
 //RESOLUTIONS FOR SMEARING
@@ -495,44 +455,65 @@ Long64_t nentries = tree->GetEntries();
 			reso_p = 3*reso_p; reso_e = 3*reso_e; reso_pi = 3*reso_pi;
 		}
 
-//CALORIMETRIC ENERGY RECONSTRUCTION
+//STILL SETTING VALUES
     double m_l; //lepton mass = muon mass for neutrino scat, lepton mass = electron mass for electron scat 
     if (isElectronMode == true){
       m_l = ELECTRON_MASS;
     }
     else {
       m_l = MUON_MASS;
+      cout<<"Not in electron mode!"<<endl;
     }
 
-/*
+//SMEARING
+
+    double smear_pipP = 0;
+    double smear_pimP = 0;
+    double smear_Epi = 0 ;
+    
     if (nfpip ==1){
+      smear_pipP = gRandom->Gaus(pipP,reso_pi*pipP);
+      smear_Epi = TMath::Sqrt(PION_MASS*PION_MASS+smear_pipP*smear_pipP);
       Epi = pipK + PION_MASS;
     }     
     else if (nfpim ==1){
+      smear_pimP = gRandom->Gaus(pimP,reso_pi*pimP);
+      smear_Epi = TMath::Sqrt(PION_MASS*PION_MASS+smear_pimP*smear_pimP);
       Epi = pimK + PION_MASS;
     }
     else {
       Epi = 0;
-}
-*/
+      smear_Epi = 0;
+    }
     double smear_pP = gRandom->Gaus(pP,reso_p*pP);
     double smear_lP = gRandom->Gaus(leptonP,reso_e*leptonP);
     double smear_El = TMath::Sqrt(m_l*m_l+smear_lP*smear_lP);
     double smear_pK = TMath::Sqrt(PROTON_MASS*PROTON_MASS+smear_pP*smear_pP) - PROTON_MASS;
-    double calE = smear_El + smear_pK + Eb;
-    //double calE = El + protonK + Eb + Epi;
-    //double kinE = ( ((DELTA_MASS)*(DELTA_MASS)) - ((PROTON_MASS-Eb)*(PROTON_MASS-Eb)) - ((m_l)*(m_l)) + (2*(PROTON_MASS - Eb)*El)) / ( 2*(PROTON_MASS - Eb - El + (El * leptonCos) ) );
-    //double kinE = ( (NEUTRON_MASS)*(NEUTRON_MASS) - (PROTON_MASS - Eb)*(PROTON_MASS-Eb) - (m_l)*(m_l) + 2*(PROTON_MASS - Eb)*El ) / ( 2*(PROTON_MASS - Eb - El + leptonP * leptonCos ) );
-    //cout <<kinE<<endl;  
+    
+    //CALORIMETRIC ENERGY RECONSTRUCTION
+    double calE = smear_El + smear_pK + Eb + smear_Epi;
 
-//QUASI-ELASTIC ENERGY RECONSTRUCTION
-    double E_QE = ( squared(NEUTRON_MASS) - squared(PROTON_MASS - Eb) - squared(m_l) + 2*(PROTON_MASS - Eb)*smear_El ) / ( 2*( PROTON_MASS - Eb - smear_El + leptonP * leptonCos ) );
+    //KINEMATIC ENERGY RECONSTRUCTION
+    double kinE = ( squared(DELTA_MASS) - squared(PROTON_MASS-Eb)-squared(m_l) + 2*(PROTON_MASS - Eb)*smear_El ) / ( 2*(PROTON_MASS - Eb - smear_El + smear_lP*leptonCos ) );
+
+    //QUASI-ELASTIC ENERGY RECONSTRUCTION
+    //double E_QE = ( squared(NEUTRON_MASS) - squared(PROTON_MASS - Eb) - squared(m_l) + 2*(PROTON_MASS - Eb)*smear_El ) / ( 2*( PROTON_MASS - Eb - smear_El + leptonP * leptonCos ) );
 
     double weight = 1.0;
-    //double weight_pim = 1.0;
-    //double weight_pip = 1.0;
-  
-//ACCEPTANCE STUFF WOULD GO HERE BUT NOT WORRIED ABOUT THAT YET
+    double weight_pim = 0.0;
+    double weight_pip = 0.0;
+    if (nfpip == 1){
+      weight_pip=1.0;
+    }
+    if (nfpim == 1){
+      weight_pim=1.0;
+    }
+    
+//cout << "plus:" << nfpip << endl;
+//cout << weight_pip << endl;
+//cout << endl;
+//cout << "minus" << nfpim << endl;
+//cout << weight_pim << endl;
 
 // MAKING THE CUTS
     string cutString="";
@@ -553,76 +534,64 @@ Long64_t nentries = tree->GetEntries();
 
     if (passescuts == true){
         hEv -> Fill(Ev, weight);
+        hcal -> Fill(calE, weight);
+        hkin -> Fill(kinE, weight);
 
+        hcal_pip->Fill(calE, weight_pip);
+	      hkin_pip->Fill(kinE, weight_pip);
+        hcal_pim->Fill(calE, weight_pim);
+	      hkin_pim->Fill(kinE, weight_pim);
+        
              if(qel == true){
                  QESignalEvents += 1;
                  hEv_qe -> Fill(Ev, weight);
                  hcal_qe -> Fill(calE,weight);
-                 hEQE_qe -> Fill(E_QE, weight);
-                 //hcal_qe_pip -> Fill(calE, weight);
-                 //hkin_qe_pip -> Fill(kinE, weight);
-                 //hnfp_qe -> Fill(nfp, weight);
-                 //hnfn_qe -> Fill(nfn, weight);
-                 //hnfpip_qe -> Fill(nfpip, weight);
-                 //hnfpim_qe -> Fill(nfpim, weight);
-                 //hnip_qe -> Fill(nip, weight);
-                 //hnin_qe -> Fill(nin, weight);
-                 //hnipip_qe -> Fill(nipip, weight);
-                 //hnipim_qe -> Fill(nipim, weight);
+                 hkin_qe -> Fill(kinE, weight);
+                 hcal_qe_pip -> Fill(calE, weight_pip);
+                 hcal_qe_pim -> Fill(calE, weight_pim);
+                 hkin_qe_pip -> Fill(kinE, weight_pip);
+                 hkin_qe_pim -> Fill(kinE, weight_pim);
+                 //hEQE_qe -> Fill(E, weight);
             }
     
              if(res == true){
                  RESSignalEvents += 1;
                  hEv_res -> Fill(Ev, weight);
                  hcal_res -> Fill(calE, weight);
-                 hEQE_res -> Fill(E_QE, weight);
-	             //hcal_res_pip -> Fill(calE, weight);
-	             //hkin_res_pip -> Fill(kinE, weight);
-	             //hnfp_res -> Fill(nfp, weight);
-                 //hnfn_res -> Fill(nfn, weight);
-                 //hnfpip_res -> Fill(nfpip, weight);
-                 //hnfpim_res -> Fill(nfpim, weight);
-                 //hnip_res -> Fill(nip, weight);
-                 //hnin_res -> Fill(nin, weight);
-                 //hnipip_res -> Fill(nipip, weight);
-                 //hnipim_res -> Fill(nipim, weight);
+                 hkin_res -> Fill(kinE, weight);
+                 hcal_res_pip -> Fill(calE, weight_pip);
+                 hcal_res_pim -> Fill(calE, weight_pim);
+                 hkin_res_pip -> Fill(kinE, weight_pip);
+                 hkin_res_pim -> Fill(kinE, weight_pim);
+                 //hEQE_res -> Fill(E_QE, weight);
+	               //hcal_res_pip -> Fill(calE, weight);
             }
 
              if(mec == true){
                  RESSignalEvents += 1;
                  hEv_mec -> Fill(Ev, weight);
                  hcal_mec -> Fill(calE, weight);
-                 hEQE_mec -> Fill(E_QE, weight);
-                 //hcal_mec_pip -> Fill(calE, weight);
-                 //hkin_mec_pip -> Fill(kinE, weight);
-                 //hnfp_mec -> Fill(nfp, weight);
-                 //hnfn_mec -> Fill(nfn, weight);
-                 //hnfpip_mec -> Fill(nfpip, weight);
-                 //hnfpim_mec -> Fill(nfpim, weight);
-                 //hnip_mec -> Fill(nip, weight);
-                 //hnin_mec -> Fill(nin, weight);
-                 //hnipip_mec -> Fill(nipip, weight);
-                 //hnipim_mec -> Fill(nipim, weight);
+                 hkin_mec -> Fill(kinE, weight);
+                 hcal_mec_pip -> Fill(calE, weight_pip);
+                 hcal_mec_pim -> Fill(calE, weight_pim);
+                 hkin_mec_pip -> Fill(kinE, weight_pip);
+                 hkin_mec_pim -> Fill(kinE, weight_pim);
+                 //hEQE_mec -> Fill(E_QE, weight);
              } 
              if(dis == true){
                DISSignalEvents += 1;
 	             hEv_dis -> Fill(Ev, weight);
                hcal_dis -> Fill(calE, weight);
-               hEQE_dis -> Fill(E_QE, weight);
-	            //hcal_dis_pip -> Fill(calE, weight);
-	            //hkin_dis_pip -> Fill(kinE, weight);
-	            //hnfp_dis -> Fill(nfp, weight);
-	            //hnfn_dis -> Fill(nfn, weight);
-	            //hnfpip_dis -> Fill(nfpip, weight);
-	            //hnfpim_dis -> Fill(nfpim, weight);
-	            //hnip_dis -> Fill(nip, weight);
-	            //hnin_dis -> Fill(nin, weight);
-	            //hnipip_dis -> Fill(nipip, weight);
-	            //hnipim_dis -> Fill(nipim, weight);
+               hkin_dis -> Fill(kinE, weight);
+               hcal_dis_pip -> Fill(calE, weight_pip);
+               hcal_dis_pim -> Fill(calE, weight_pim);
+               hkin_dis_pip -> Fill(kinE, weight_pip);
+               hkin_dis_pim -> Fill(kinE, weight_pim);
+              // hEQE_dis -> Fill(E_QE, weight);
              }
     
     }
-  }    // end big loop
+  }    // end big loop over entries
 
     delete gRandom;
 
@@ -642,18 +611,42 @@ Long64_t nentries = tree->GetEntries();
   TFile *output = new TFile(outFileName.c_str(),"RECREATE"); //makes the file writeable, only 1 file can be open and writeable at a time in ROOT
     hEv -> Write();
     hcal -> Write();
+    hkin -> Write();
+    
+    hcal_qe -> Write();
+    hcal_res -> Write();
+    hcal_dis -> Write();
+    hcal_mec -> Write();
+
+    hkin_qe -> Write();
+    hkin_res -> Write();
+    hkin_dis -> Write();
+    hkin_mec -> Write();
+
     hEv_qe -> Write();
     hEv_res -> Write();
     hEv_mec -> Write();
     hEv_dis -> Write();
-    hEQE_qe -> Write();
-    hEQE_res -> Write();
-    hEQE_mec -> Write();
-    hEQE_dis -> Write();
-    hcal_qe -> Write();
-    hcal_res -> Write();
-    hcal_mec -> Write();
-    hcal_dis -> Write();
+    hcal_pip -> Write();
+    hkin_pip ->Write();
+    hcal_qe_pip -> Write();
+    hcal_res_pip -> Write();
+    hcal_dis_pip -> Write();
+    hcal_mec_pip -> Write();
+    hcal_pim -> Write();
+    hkin_pim ->Write();
+    hcal_qe_pim -> Write();
+    hcal_res_pim -> Write();
+    hcal_dis_pim -> Write();
+    hcal_mec_pim -> Write();
+    hkin_qe_pip -> Write();
+    hkin_res_pip -> Write();
+    hkin_dis_pip -> Write();
+    hkin_mec_pip -> Write();
+    hkin_qe_pim -> Write();
+    hkin_res_pim -> Write();
+    hkin_dis_pim -> Write();
+    hkin_mec_pim -> Write();
     
     output -> Close();
  
