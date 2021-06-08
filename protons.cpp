@@ -136,7 +136,7 @@ TFile *f = new TFile(inFileName.c_str());
 //NUMBER OF ENTRIES
 Long64_t nentries = tree->GetEntries();
  if (tester == "test"){
-     nentries = 100;} //for debugging
+     nentries = 10000;} //for debugging
 
   //WHICH LEPTON?
   bool isElectronMode = CheckIfElectrons(tree);
@@ -254,8 +254,11 @@ Long64_t nentries = tree->GetEntries();
   
   //making histograms
   TH1D *hEp = new TH1D("Ep", "Proton energies", Bins, 0.0, Histo_xmax); //create a pointer to a histogram
-  TH1D *hkin = new TH1D("Kin", "Kinematic energy reconstruction", Bins, 0.0, Histo_xmax);
-  TH1D *hangle = new TH1D("Angle", "Cosine of angle the proton is scattered at", Bins, 0.0, Histo_xmax);
+  TH1D *hEp_qe = new TH1D("Ep_qe", "Proton energies in quasi-elastic events", Bins, 0.0, Histo_xmax);
+  TH1D *hEp_res = new TH1D("Ep_res", "Proton energies in resonant events", Bins, 0.0, Histo_xmax);
+  TH1D *hEp_mec = new TH1D("Ep_mec", "Proton energies in mec events", Bins, 0.0, Histo_xmax);
+  TH1D *hEp_dis = new TH1D("Ep_dis", "Proton energies in dis events", Bins, 0.0, Histo_xmax);
+  
 
   gRandom = new TRandom3();
   gRandom->SetSeed(10);
@@ -300,13 +303,26 @@ Long64_t nentries = tree->GetEntries();
 
  };
  };
- cout<<mintrack<<endl;
+
  
   //cout<<"Number of protons:" << pCount << endl;
       
+      if (Ep!=0)
+      {
         hEp -> Fill(Ep, 1.0);
-        hkin -> Fill(protonK, 1.0);
-        hangle -> Fill(pCos, 1.0);
+        if (qel == true){
+          hEp_qe -> Fill(Ep, 1.0);
+        }
+        if (res == true){
+          hEp_res -> Fill(Ep, 1.0);
+        }
+        if (mec == true){
+          hEp_mec -> Fill(Ep, 1.0);
+        }
+        if (dis == true){
+          hEp_dis -> Fill(Ep, 1.0);
+        }
+      }
             
   };   // end loop iterating over final state particles
   }; //end loop iterating over entries
@@ -318,8 +334,10 @@ Long64_t nentries = tree->GetEntries();
   string outFileName = PATH+string(filename_nopath);
   TFile *output = new TFile(outFileName.c_str(),"RECREATE"); //makes the file writeable, only 1 file can be open and writeable at a time in ROOT
     hEp -> Write();
-    hkin -> Write();
-    hangle -> Write();
+    hEp_qe -> Write();
+    hEp_res -> Write();
+    hEp_mec -> Write();
+    hEp_dis -> Write();
    
     
     output -> Close();
