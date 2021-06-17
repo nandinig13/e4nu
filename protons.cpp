@@ -1,4 +1,5 @@
 #include "TH1.h"
+#include "TH2.h"
 #include "TH3.h"
 #include "TFile.h"
 #include "TGraph.h"
@@ -254,16 +255,18 @@ Long64_t nentries = tree->GetEntries();
   
   //making histograms
   TH1D *hEp = new TH1D("Ep", "Proton energies", Bins, 0.0, Histo_xmax); //create a pointer to a histogram
-  TH1D *hEp_qe = new TH1D("Ep_qe", "Proton energies in quasi-elastic events", Bins, 0.0, Histo_xmax);
-  TH1D *hEp_res = new TH1D("Ep_res", "Proton energies in resonant events", Bins, 0.0, Histo_xmax);
-  TH1D *hEp_mec = new TH1D("Ep_mec", "Proton energies in mec events", Bins, 0.0, Histo_xmax);
-  TH1D *hEp_dis = new TH1D("Ep_dis", "Proton energies in dis events", Bins, 0.0, Histo_xmax);
-  
+  TH1D *hEp_primary = new TH1D("Ep_primary", "Energy of primary proton", Bins, 0.0, Histo_xmax);
+  //TH1D *hEp_other = new TH1D("Ep_other", "Energy distribution of secondary protons", Bins, 0.0, Histo_xmax);
+  TH1D *hEp_total = new TH1D("Ep_total", "Total proton energy", Bins, 0.0, Histo_xmax);
+  TH2D *hEp_min_max_qe = new TH2D ("Ep_min_max_qe,", "comparing primary and secondary proton energies in qe events", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
+  TH2D *hEp_min_max_res = new TH2D ("Ep_min_max_res,", "comparing primary and secondary proton energies in resonant events", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
+  TH2D *hEp_min_max_mec = new TH2D ("Ep_min_max_mec,", "comparing primary and secondary proton energies in mec events", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
+  TH2D *hEp_min_max_dis = new TH2D ("Ep_min_max_dis,", "comparing primary and secondary proton energies in dis events", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
+
 
   gRandom = new TRandom3();
   gRandom->SetSeed(10);
   
-  double mintrack = 1000;
   for( Long64_t i = 0; i < nentries ; i++){
   //cout<<"Iteration: "<< i << endl;
   //cout<<"No. of final state particles: " << nf << endl;
@@ -275,7 +278,9 @@ Long64_t nentries = tree->GetEntries();
       double pCos = 0;    //cosine of scattering angle 
       double pPhi = 0;    //phi
       int pCount = 0;
-      double Ep = 0; //energy of the proton with max energy
+      double Ep_max = 0; //energy of the proton with max energy
+      double Ep_min=999999999;
+      double tot = 0; //summing up proton energies
 
     for(Int_t k=0; k<nf; k++) { //loop through k final particles
       int pdg = pdgf[k];
@@ -290,42 +295,52 @@ Long64_t nentries = tree->GetEntries();
 	    pPhi = kVec.Phi() + TMath::Pi(); 
 	    protonK = Ef[k] - PROTON_MASS;
       pCount +=1;
-      if (Ef[k] > Ep){
-      Ep = Ef[k];
+      tot += Ef[k];
+      if (Ef[k] > Ep_max){
+      Ep_max = Ef[k];
       };
+
+      if (Ef[k] < Ep_min){
+      Ep_min = Ef[k];
+      }; 
  
 	};
   }
- 
- if (Ep!=0){
- if (Ep<mintrack){
-   mintrack = Ep;
 
- };
- };
-
+};   // end loop iterating over final state particles
  
-  //cout<<"Number of protons:" << pCount << endl;
+if (pCount == 2){
+  if (Ep_max!=0)
+    {
+      cout << Ep_max << endl;
+      cout << Ep_min << endl;
+      cout << endl;
+      hEp -> Fill(Ep_max, 1.0);
+      hEp_primary -> Fill(Ep_max, 1.0);
+      if (qel == true){
+      hEp_min_max_qe -> Fill((Ep_max-0.938), (Ep_min-0.938));
+  
+
+      }
+      if (res == true){
+      hEp_min_max_res -> Fill((Ep_max-0.938), (Ep_min-0.938));
+
+      }
+      if (dis == true){
+      hEp_min_max_mec -> Fill((Ep_max-0.938), (Ep_min-0.938));
+
+      }
+      if (mec == true){
+      hEp_min_max_dis -> Fill((Ep_max-0.938), (Ep_min-0.938));
+ 
+
+      }
       
-      if (Ep!=0)
-      {
-        hEp -> Fill(Ep, 1.0);
-        if (qel == true){
-          hEp_qe -> Fill(Ep, 1.0);
-        }
-        if (res == true){
-          hEp_res -> Fill(Ep, 1.0);
-        }
-        if (mec == true){
-          hEp_mec -> Fill(Ep, 1.0);
-        }
-        if (dis == true){
-          hEp_dis -> Fill(Ep, 1.0);
-        }
       }
             
-  };   // end loop iterating over final state particles
+}
   }; //end loop iterating over entries
+  
     delete gRandom;
   
   //string targetString = GetTargetString(tree);
@@ -334,10 +349,11 @@ Long64_t nentries = tree->GetEntries();
   string outFileName = PATH+string(filename_nopath);
   TFile *output = new TFile(outFileName.c_str(),"RECREATE"); //makes the file writeable, only 1 file can be open and writeable at a time in ROOT
     hEp -> Write();
-    hEp_qe -> Write();
-    hEp_res -> Write();
-    hEp_mec -> Write();
-    hEp_dis -> Write();
+    hEp_primary -> Write();
+    hEp_min_max_qe -> Write();
+    hEp_min_max_res -> Write();
+    hEp_min_max_mec -> Write();
+    hEp_min_max_dis -> Write();
    
     
     output -> Close();
