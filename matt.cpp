@@ -27,7 +27,7 @@ using namespace std;
 //Physical constants                                                              
 const Double_t ELECTRON_MASS= 0.00051099; //Gev 
 const Double_t MUON_MASS= 0.105658; //Gev     
-const Double_t beam_energy = 1.161; //GeV  //DO I NEED TO CHANGE THIS FOR DIFFERENT BEAM ENERGY  
+const Double_t beam_energy = 2.261; //GeV  //DO I NEED TO CHANGE THIS FOR DIFFERENT BEAM ENERGY  
 const Double_t Eb = 0.025;//binding energies from Afro: 0.025 for 12C, 0.04 for 40Ar, 0.03 for 56Fe NEED TO CHECK VALIDITY                                                          
 const Double_t PROTON_MASS =  0.938272; //mass of proton                                           
 const Double_t NEUTRON_MASS =  0.939565; //mass of neutron                                        
@@ -85,7 +85,7 @@ int tgt; //pdg code of nuclear target
 int hitnuc; //hit nucleon pdg code
 bool cc; //is it a charged current event?
 bool nc;//is it a neutral current event?    
-int resid; // the ID of the baryonic resoce state if res = true
+int resid; // the ID of the baryonic resonance state if res = true
 int em; // is it an electromagnetic interaction?
 
 class Cut {
@@ -127,7 +127,7 @@ bool Cut::PassesCut()
   {
   case FINAL_STATE_CHARGED_PION: return  (nfpim + nfpip == 1); 
     break; // 1 final state pion
-  case FINAL_STATE_PROTON: return (nfp == 1); 
+  case FINAL_STATE_PROTON: return (nfp >= 1); 
     break;
   case FINAL_STATE_NEUTRON: return (nfn == 0);
     break;
@@ -179,7 +179,7 @@ int pions(string inFileName, string outdir) {
   TTree *tree = (TTree*) f->Get("gst");
   
   Long64_t nentries = tree->GetEntries(); //eset nentries to a small number for troubleshooting
-         //nentries = 100; //for debugging only
+        nentries = 100; //for debugging only
   
     // Is it electron or neutrino mode?
   bool isElectronMode = CheckIfElectrons(tree);
@@ -199,11 +199,13 @@ int pions(string inFileName, string outdir) {
   
   vector<Cut*> cuts;
     //cuts.push_back(new Cut("Bjorken x cut","TMath::Abs(x-1) < 0.2")); //and so on
-     cuts.push_back(new Cut("1pi" , "1pi", FINAL_STATE_CHARGED_PION));
-     cuts.push_back(new Cut("1p" , "1p", FINAL_STATE_PROTON));
-    // cuts.push_back(new Cut("0pi0" , "0pi0", FINAL_STATE_NEUTRAL_PION));
-    // cuts.push_back(new Cut("0n", "0n", FINAL_STATE_NEUTRON));
+     //cuts.push_back(new Cut("1pi" , "1pi", FINAL_STATE_CHARGED_PION));
+     //cuts.push_back(new Cut("1p" , "1p", FINAL_STATE_PROTON));
+     //cuts.push_back(new Cut("0pi0" , "0pi0", FINAL_STATE_NEUTRAL_PION));
+     //cuts.push_back(new Cut("0n", "0n", FINAL_STATE_NEUTRON));
      //cuts.push_back(new Cut("deltaRES", "deltaRES", RESONANCE_STATE));
+     cuts.push_back(new Cut(">= 1p" , ">= 1p", FINAL_STATE_PROTON));
+     cuts.push_back(new Cut("1pi" , "1pi", FINAL_STATE_CHARGED_PION));
 //     cout<<cuts<<endl;
 
   // I've put these just as text but you can use a function to define more complicated cuts if you want to - just create a Cut object and add it to your vector
@@ -360,20 +362,20 @@ int pions(string inFileName, string outdir) {
   TH1D *hkin_dis_pim = new TH1D("kin_dis_pim", "Kinematic energy reconstruction in DIS events with 1 pi-", Bins, 0.0, Histo_xmax);
   TH1D *hkin_mec_pim = new TH1D("kin_mec_pim", "Kinematic energy reconstruction in MEC events with 1 pi-", Bins, 0.0, Histo_xmax);
 
-  //TH1D *hkin_res_Delta_pip = new TH1D("kin_res_Delta_pip", "Kinematic energy reconstruction in RES events with 1 pi+ from a (1232) RES", Bins, 0.0, Histo_xmax);
-  //TH1D *hkin_res_NODelta_pip = new TH1D("kin_res_NODelta_pip", "Kinematic energy reconstruction in RES events with 1 pi+ NOT from a (1232) RES", Bins, 0.0, Histo_xmax);
-  //TH1D *hkin_res_Delta_pim = new TH1D("kin_res_Delta_pim", "Kinematic energy reconstruction in RES events with 1 pi- from a (1232) RES", Bins, 0.0, Histo_xmax);
-  //TH1D *hkin_res_NODelta_pim = new TH1D("kin_res_NODelta_pim", "Kinematic energy reconstruction in RES events with 1 pi- NOT from a (1232) RES", Bins, 0.0, Histo_xmax);
+  TH1D *hkin_res_Delta_pip = new TH1D("kin_res_Delta_pip", "Kinematic energy reconstruction in RES events with 1 pi+ from a (1232) RES", Bins, 0.0, Histo_xmax);
+  TH1D *hkin_res_NODelta_pip = new TH1D("kin_res_NODelta_pip", "Kinematic energy reconstruction in RES events with 1 pi+ NOT from a (1232) RES", Bins, 0.0, Histo_xmax);
+  TH1D *hkin_res_Delta_pim = new TH1D("kin_res_Delta_pim", "Kinematic energy reconstruction in RES events with 1 pi- from a (1232) RES", Bins, 0.0, Histo_xmax);
+  TH1D *hkin_res_NODelta_pim = new TH1D("kin_res_NODelta_pim", "Kinematic energy reconstruction in RES events with 1 pi- NOT from a (1232) RES", Bins, 0.0, Histo_xmax);
     // --------- CLAS ACCEPTANCE MAPS -----------------
-  //TFile* file_acceptance_1_161 = TFile::Open("maps/e2a_maps_12C_E_1_161.root");
-  //TFile* file_acceptance_1_161_p = TFile::Open("maps/e2a_maps_12C_E_1_161_p.root");
-  //TFile* file_acceptance_1_161_pip = TFile::Open("maps/e2a_maps_12C_E_1_161_pip.root");
-  //TFile* file_acceptance_1_161_pim = TFile::Open("maps/e2a_maps_12C_E_1_161_pim.root");
+  TFile* file_acceptance_1_161 = TFile::Open("maps/e2a_maps_12C_E_1_161.root");
+  TFile* file_acceptance_1_161_p = TFile::Open("maps/e2a_maps_12C_E_1_161_p.root");
+  TFile* file_acceptance_1_161_pip = TFile::Open("maps/e2a_maps_12C_E_1_161_pip.root");
+  TFile* file_acceptance_1_161_pim = TFile::Open("maps/e2a_maps_12C_E_1_161_pim.root");
 
-  //TFile* file_acceptance_2_261 = TFile::Open("maps/e2a_maps_12C_E_2_261.root");
-  //TFile* file_acceptance_2_261_p = TFile::Open("maps/e2a_maps_12C_E_2_261_p.root");
-  //TFile* file_acceptance_2_261_pip = TFile::Open("maps/e2a_maps_12C_E_2_261_pip.root");
-  //TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.root"); 
+  TFile* file_acceptance_2_261 = TFile::Open("maps/e2a_maps_12C_E_2_261.root");
+  TFile* file_acceptance_2_261_p = TFile::Open("maps/e2a_maps_12C_E_2_261_p.root");
+  TFile* file_acceptance_2_261_pip = TFile::Open("maps/e2a_maps_12C_E_2_261_pip.root");
+  TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.root"); 
   
     //define random gaussian for smearing
   gRandom = new TRandom3();
@@ -479,7 +481,6 @@ int pions(string inFileName, string outdir) {
     double weight_pim = 1.0;
     double weight_pip = 1.0;
 
-/
     bool clas_acceptance = true;   
     if (clas_acceptance == true){
       double e_acc_ratio = 1.0;
@@ -492,9 +493,18 @@ int pions(string inFileName, string outdir) {
 	pip_acc_ratio = acceptance_c(pipP, pipCos, pipPhi, 211, file_acceptance_2_261_pip);
 	pim_acc_ratio = acceptance_c(pimP, pimCos, pimPhi, -211, file_acceptance_2_261_pim);
 
+  cout << nfpip << endl;
+  cout << "initial weight" << weight_pip << endl;
+  cout << "e_acc" << e_acc_ratio << endl;
+  cout << "p_acc" << p_acc_ratio << endl;
+  cout << "pip_acc" << pip_acc_ratio << endl;
+
 	weight_pip *= e_acc_ratio * p_acc_ratio * pip_acc_ratio;
 
 	weight_pim *= e_acc_ratio * p_acc_ratio * pim_acc_ratio;
+
+  cout << "final weight" << weight_pip << endl;
+  cout << endl;
 
     }
 
@@ -545,12 +555,12 @@ int pions(string inFileName, string outdir) {
          hEv_res -> Fill(Ev, weight_pip);
 	 hcal_res_pip -> Fill(calE, weight_pip);
 	 hkin_res_pip -> Fill(kinE, weight_pip);
-	 //if(resid ==0){
-	  // hkin_res_Delta_pip->Fill(kinE, weight);
-	 //}
-	 //if(resid !=0){
-	  // hkin_res_NODelta_pip->Fill(kinE, weight);
-	 //}
+	 if(resid ==0){
+	   hkin_res_Delta_pip->Fill(kinE, weight);
+	 }
+	 if(resid !=0){
+	   hkin_res_NODelta_pip->Fill(kinE, weight);
+	 }
     }if(mec == true){
       hEv_mec -> Fill(Ev, weight_pip);
       hcal_mec_pip -> Fill(calE, weight_pip);
@@ -574,12 +584,12 @@ int pions(string inFileName, string outdir) {
 	  hEv_res -> Fill(Ev, weight_pim);
 	  hcal_res_pim -> Fill(calE, weight_pim);
 	  hkin_res_pim -> Fill(kinE, weight_pim);
-	  //if(resid ==0){
-	   // hkin_res_Delta_pim->Fill(kinE, weight_pim);
-	  //}
-	  //if(resid !=0){
-	    //hkin_res_NODelta_pim->Fill(kinE, weight);
-	  //}
+	  if(resid ==0){
+	    hkin_res_Delta_pim->Fill(kinE, weight_pim);
+	  }
+	  if(resid !=0){
+	    hkin_res_NODelta_pim->Fill(kinE, weight);
+	  }
 	}if(mec == true){
 	  hEv_mec -> Fill(Ev, weight_pim);
 	  hcal_mec_pim -> Fill(calE, weight_pim);
@@ -590,16 +600,8 @@ int pions(string inFileName, string outdir) {
 	  hkin_dis_pim -> Fill(kinE, weight_pim);
 }
     }
-    cout << "plus:" << nfpip << endl;
-cout << weight_pip << endl;
-cout << endl;
-cout << "minus" << nfpim << endl;
-cout << weight_pim << endl;
     }
   }
-
-
-
      string  PATH = "nanPlots/" + outdir;
   string filename_nopath = inFileName.substr(inFileName.find_last_of("/")+1); //gets filename from filepath
   string outFileName = PATH+string(filename_nopath);
@@ -644,10 +646,10 @@ cout << weight_pim << endl;
     hkin_dis_pim -> Write();
     hkin_mec_pim -> Write();
 
-    //hkin_res_Delta_pip -> Write();
-    //hkin_res_Delta_pim -> Write();
-    //hkin_res_NODelta_pip -> Write();
-    //hkin_res_NODelta_pim -> Write();
+    hkin_res_Delta_pip -> Write();
+    hkin_res_Delta_pim -> Write();
+    hkin_res_NODelta_pip -> Write();
+    hkin_res_NODelta_pim -> Write();
      output -> Close();
  cout << "histograms filled, output closed!" << endl;
  return 0;

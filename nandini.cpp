@@ -128,10 +128,12 @@ string Cut::GetTitleText()
 {
   return this->titleText_;
 }
+
 string Cut::GetCutString()
 {
   return this->cutString_;
 }
+
 bool Cut::PassesCut()
 {
   //bool _cutID = true; 
@@ -198,7 +200,7 @@ TFile *f = new TFile(inFileName.c_str());
 //NUMBER OF ENTRIES
 Long64_t nentries = tree->GetEntries();
  if (tester == "test"){
-     nentries = 20;} //for debugging
+     nentries = 100;} //for debugging
 
   //WHICH LEPTON?
   bool isElectronMode = CheckIfElectrons(tree);
@@ -332,11 +334,6 @@ Long64_t nentries = tree->GetEntries();
   TH1D *hcal = new TH1D("Cal", "Calorimetric energy reconstruction", Bins, 0.0, Histo_xmax); 
   TH1D *hkin = new TH1D("Kin", "Kinematic energy reconstruction", Bins, 0.0, Histo_xmax);
 
-  TH1D *hEv_qe = new TH1D("Ev_qe", "Lepton energy in QE events (GENIE)", Bins, 0.0, Histo_xmax);
-  TH1D *hEv_res = new TH1D("Ev_res", "Lepton energy in RES events (GENIE)", Bins, 0.0, Histo_xmax);
-  TH1D *hEv_dis = new TH1D("Ev_dis", "Lepton energy in DIS events (GENIE)", Bins, 0.0, Histo_xmax);
-  TH1D *hEv_mec = new TH1D("Ev_mec", "Lepton energy in MEC events (GENIE)", Bins, 0.0, Histo_xmax);
-
   TH1D *hcal_qe = new TH1D("cal_qe", "Calorimetric energy reconstruction in QE events", Bins, 0.0, Histo_xmax);
   TH1D *hcal_res = new TH1D("cal_res", "Calorimetric energy reconstruction in RES events", Bins, 0.0, Histo_xmax);
   TH1D *hcal_dis = new TH1D("cal_dis", "Calorimetric energy reconstruction in DIS events", Bins, 0.0, Histo_xmax);
@@ -391,12 +388,28 @@ TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.ro
   int RESSignalEvents = 0;
   int DISSignalEvents = 0;  
     
+  int tgtproton = 0;
+  int tgtneutron = 0;
+  int tgtother =0;
+
   for( Long64_t i = 0; i < nentries ; i++)
   {
-        cout << "QE" << qel << endl;
-    cout << "res" << res << endl;
-    cout << "mec" << mec << endl;
-    cout << "dis" << dis << endl;
+
+    if (hitnuc == 2212){
+      tgtproton +=1;
+    }
+
+   else if (hitnuc == 2112){
+      tgtneutron += 1;
+    }
+
+    else {
+      tgtother += 1;
+    }
+   // cout << "QE" << qel << endl;
+   // cout << "res" << res << endl;
+   // cout << "mec" << mec << endl;
+   // cout << "dis" << dis << endl;
 
       tree -> GetEntry(i);
       TVector3 lP(pxl, pyl, pzl);   //get lepton information
@@ -513,13 +526,15 @@ TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.ro
     double weight = 1.0;
     double weight_pim = 0.0;
     double weight_pip = 0.0;
-    if (nfpip >= 1){
-      weight_pip=1.0;
-    }
-    if (nfpim >= 1){
-      weight_pim=1.0;
-    }
+   
 
+  if (nfpip == 1){
+    weight_pip=1.0;    
+  }
+  if (nfpim == 1){
+    weight_pim=1.0;
+  }
+/*
 bool clas_acceptance = true;  //might want to pass this as an argument one day
     if (clas_acceptance == true){
       double e_acc_ratio = 1.0;
@@ -532,12 +547,21 @@ bool clas_acceptance = true;  //might want to pass this as an argument one day
 	pip_acc_ratio = acceptance_c(pipP, pipCos, pipPhi, 211, file_acceptance_2_261_pip);
 	pim_acc_ratio = acceptance_c(pimP, pimCos, pimPhi, -211, file_acceptance_2_261_pim);
 
+  cout << nfpip << endl;
+  cout << "initial weight" << weight_pip << endl;
+  cout << "e_acc" << e_acc_ratio << endl;
+  cout << "p_acc" << p_acc_ratio << endl;
+  cout << "pip_acc" << pip_acc_ratio << endl;
+
 	weight_pip *= e_acc_ratio * p_acc_ratio * pip_acc_ratio;
 
 	weight_pim *= e_acc_ratio * p_acc_ratio * pim_acc_ratio;
 
+  cout << "final weight" << weight_pip << endl;
+  cout << endl;
     }
-    
+    */
+
 //cout << "plus:" << nfpip << endl;
 //cout << weight_pip << endl;
 //cout << endl;
@@ -560,84 +584,79 @@ bool clas_acceptance = true;  //might want to pass this as an argument one day
 	        passescuts = false;
 	    } 
     }
-
+//cout << passescuts << endl;
     if (passescuts == true){
-        hEv -> Fill(Ev, weight);
-        hcal -> Fill(calE, weight);
-        hkin -> Fill(kinE, weight);
+  
 
-        hcal_pip->Fill(calE, weight_pip);
-	      hkin_pip->Fill(kinE, weight_pip);
-        hcal_pim->Fill(calE, weight_pim);
-	      hkin_pim->Fill(kinE, weight_pim);
-        
-             if(qel == true){
-                 QESignalEvents += 1;
-                 hEv_qe -> Fill(Ev, weight);
-                 hcal_qe -> Fill(calE,weight);
-                 hkin_qe -> Fill(kinE, weight);
-                 hcal_qe_pip -> Fill(calE, weight_pip);
-                 hcal_qe_pim -> Fill(calE, weight_pim);
-                 hkin_qe_pip -> Fill(kinE, weight_pip);
-                 hkin_qe_pim -> Fill(kinE, weight_pim);
-                 //hEQE_qe -> Fill(E, weight);
-            }
-    
-             if(res == true){
-                 RESSignalEvents += 1;
-                 hEv_res -> Fill(Ev, weight);
-                 hcal_res -> Fill(calE, weight);
-                 hkin_res -> Fill(kinE, weight);
-                 hcal_res_pip -> Fill(calE, weight_pip);
-                 hcal_res_pim -> Fill(calE, weight_pim);
-                 hkin_res_pip -> Fill(kinE, weight_pip);
-                 hkin_res_pim -> Fill(kinE, weight_pim);
-                 //hEQE_res -> Fill(E_QE, weight);
-	               //hcal_res_pip -> Fill(calE, weight);
-            }
+      hcal->Fill(calE, weight);
+      hkin->Fill(kinE, weight);
+      hEv->Fill(Ev, weight);
 
-             if(mec == true){
-                 RESSignalEvents += 1;
-                 hEv_mec -> Fill(Ev, weight);
-                 hcal_mec -> Fill(calE, weight);
-                 hkin_mec -> Fill(kinE, weight);
-                 hcal_mec_pip -> Fill(calE, weight_pip);
-                 hcal_mec_pim -> Fill(calE, weight_pim);
-                 hkin_mec_pip -> Fill(kinE, weight_pip);
-                 hkin_mec_pim -> Fill(kinE, weight_pim);
-                 //hEQE_mec -> Fill(E_QE, weight);
-             } 
-             if(dis == true){
-               DISSignalEvents += 1;
-	             hEv_dis -> Fill(Ev, weight);
-               hcal_dis -> Fill(calE, weight);
-               hkin_dis -> Fill(kinE, weight);
-               hcal_dis_pip -> Fill(calE, weight_pip);
-               hcal_dis_pim -> Fill(calE, weight_pim);
-               hkin_dis_pip -> Fill(kinE, weight_pip);
-               hkin_dis_pim -> Fill(kinE, weight_pim);
-              // hEQE_dis -> Fill(E_QE, weight);
-             }
-    
-    }
-  }    // end big loop over entries
+      if (qel == true){
+  QESignalEvents += 1;
+	hcal_qe->Fill(calE, weight);
+	hkin_qe->Fill(kinE, weight);
+
+  hcal_qe_pip -> Fill(calE, weight_pip);
+  hkin_qe_pip -> Fill(kinE, weight_pip);
+	hcal_qe_pim -> Fill(calE, weight_pim);
+	hkin_qe_pim -> Fill(kinE, weight_pim);
+
+      }
+      if (res == true){
+  RESSignalEvents += 1;
+	hcal_res->Fill(calE, weight);
+	hkin_res->Fill(kinE, weight);
+  hcal_res_pip -> Fill(calE, weight_pip);
+  hkin_res_pip -> Fill(kinE, weight_pip);
+	hcal_res_pim -> Fill(calE, weight_pim);
+	hkin_res_pim -> Fill(kinE, weight_pim);
+      }
+      if (dis == true){
+  DISSignalEvents += 1;
+	hcal_dis->Fill(calE, weight);
+	hkin_dis->Fill(kinE, weight);
+  hcal_dis_pip -> Fill(calE, weight_pip);
+  hkin_dis_pip -> Fill(kinE, weight_pip);
+	hcal_dis_pim -> Fill(calE, weight_pim);
+	hkin_dis_pim -> Fill(kinE, weight_pim);
+      }
+      if (mec == true){
+  MECSignalEvents += 1;
+	hcal_mec->Fill(calE, weight);
+	hkin_mec->Fill(kinE, weight);
+  hcal_mec_pip -> Fill(calE, weight_pip);
+  hkin_mec_pip -> Fill(kinE, weight_pip);
+  hcal_mec_pim -> Fill(calE, weight_pim);
+	hkin_mec_pim -> Fill(kinE, weight_pim);
+      }
+
+    } // end if passes cuts
+  } // end big loop over entries
 
     delete gRandom;
 
   //PRINTING FRACTIONAL CONTRIBUTIONS
+  
   std::cout << std::endl << "QE Fractional Contribution = " << int(double(QESignalEvents) / double(nentries) *100.) << " \%" << std::endl;
 	std::cout << std::endl << "MEC Fractional Contribution = " << int(double(MECSignalEvents) / double(nentries)*100.) << " \%" << std::endl;
 	std::cout << std::endl << "RES Fractional Contribution = " << int(double(RESSignalEvents) / double(nentries)*100.) << " \%" << std::endl;
 	std::cout << std::endl << "DIS Fractional Contribution = " << int(double(DISSignalEvents) / double(nentries)*100.) << " \%" << std::endl;
-  
-  
+
+  std::cout << "Proportion of protons hit" << int((double(tgtproton)/ double(nentries)) *100.) << std::endl;
+  std::cout << "Proportion of neutrons hit" << int((double(tgtneutron)/ double(nentries)) *100.) << std::endl;
+  std::cout << "Proportion of other hit" << int((double(tgtother)/ double(nentries)) *100.) << std::endl;
+
   //string targetString = GetTargetString(tree);
   string  PATH = "nanPlots/" + outdir;
   string filename_nopath = inFileName.substr(inFileName.find_last_of("/")+1); //gets filename from filepath
   string outFileName = PATH+string(filename_nopath);
   //string outFileName = PATH + "energies";
   //  TFile *output = new TFile(inFileName.c_str(),"RECREATE"); //open a file
+
+  
   TFile *output = new TFile(outFileName.c_str(),"RECREATE"); //makes the file writeable, only 1 file can be open and writeable at a time in ROOT
+    
     hEv -> Write();
     hcal -> Write();
     hkin -> Write();
@@ -652,10 +671,6 @@ bool clas_acceptance = true;  //might want to pass this as an argument one day
     hkin_dis -> Write();
     hkin_mec -> Write();
 
-    hEv_qe -> Write();
-    hEv_res -> Write();
-    hEv_mec -> Write();
-    hEv_dis -> Write();
     hcal_pip -> Write();
     hkin_pip ->Write();
     hcal_qe_pip -> Write();
@@ -678,7 +693,10 @@ bool clas_acceptance = true;  //might want to pass this as an argument one day
     hkin_mec_pim -> Write();
     
     output -> Close();
+
  
- cout << "Histograms filled. Output closed!" << endl;
+ std::cout << "Histograms filled. Output closed!" << std::endl;
+
+ 
  return 0;
 }

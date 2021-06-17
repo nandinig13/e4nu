@@ -18,6 +18,12 @@ double acceptance_c(double p, double cost, double phi, int id,TFile* file_accept
 	TH3D * p_acc;
 	TH3D * p_gen;
 
+	TH3D * pip_acc;
+	TH3D * pip_gen;
+
+	TH3D * pim_acc;
+	TH3D * pim_gen;
+
         // Electron
 
 	if (id == 11) {
@@ -48,8 +54,7 @@ double acceptance_c(double p, double cost, double phi, int id,TFile* file_accept
 		double e_num_acc = e_acc->GetBinContent(e_pbin_acc, e_tbin_acc, e_phibin_acc);
 
 		double e_acc_ratio = (double)e_num_acc / (double)e_num_gen;
-		double e_acc_err = (double)sqrt(e_acc_ratio*(1-e_acc_ratio)) / (double)e_num_gen;
-
+    		double e_acc_err = (double)sqrt(e_acc_ratio*(1-e_acc_ratio)) / (double)e_num_gen;
 		return e_acc_ratio;
 	}
 
@@ -87,6 +92,73 @@ double acceptance_c(double p, double cost, double phi, int id,TFile* file_accept
 		return p_acc_ratio;
 	}
 
-	return 0.;
+
+        // Pi+                                                                                                           
+
+        if (id == 211) {
+
+	  if (redef == -30){
+
+	    pip_acc = (TH3D*)file_acceptance->Get("Accepted Particles");
+	    pip_gen = (TH3D*)file_acceptance->Get("Generated Particles");
+	  }
+
+	  if (redef == 0){
+
+	    pip_acc = (TH3D*)file_acceptance->Get("Accepted Particles");
+	    pip_gen = (TH3D*)file_acceptance->Get("Generated Particles");
+	  }
+
+	  //Find number of generated events                                                                           
+
+	  double pip_pbin_gen = pip_gen->GetXaxis()->FindBin(p);
+	  double pip_tbin_gen = pip_gen->GetYaxis()->FindBin(cost);
+	  double pip_phibin_gen = pip_gen->GetZaxis()->FindBin(phi*180/TMath::Pi()+redef);
+	  double pip_num_gen = pip_gen->GetBinContent(pip_pbin_gen, pip_tbin_gen, pip_phibin_gen);
+	  //Find number of accepted events                                                                            
+
+	  double pip_pbin_acc = pip_acc->GetXaxis()->FindBin(p);
+	  double pip_tbin_acc = pip_acc->GetYaxis()->FindBin(cost);
+	  double pip_phibin_acc = pip_acc->GetZaxis()->FindBin(phi*180/TMath::Pi()+redef);
+	  double pip_num_acc = pip_acc->GetBinContent(pip_pbin_acc, pip_tbin_acc, pip_phibin_acc);
+	  double pip_acc_ratio = (double)pip_num_acc / (double)pip_num_gen;
+	  double pip_acc_prr = (double)sqrt(pip_acc_ratio*(1-pip_acc_ratio)) / (double)pip_num_gen;
+	  //	  cout<<"acc"<<pip_num_acc<<endl;                                                                       
+	  // cout<<"gen"<<pip_num_gen<<endl;
+	  return pip_acc_ratio;
+        }
+        // Pi-                                                                                                                                                                       
+	if (id == -211) {
+
+          if (redef == -30){
+
+            pim_acc = (TH3D*)file_acceptance->Get("Accepted Particles");
+            pim_gen = (TH3D*)file_acceptance->Get("Generated Particles");
+          }
+
+          if (redef == 0){
+
+            pim_acc = (TH3D*)file_acceptance->Get("Accepted Particles");
+            pim_gen = (TH3D*)file_acceptance->Get("Generated Particles");
+          }
+
+          //Find number of generated events                                                                             
+
+          double pim_pbin_gen = pim_gen->GetXaxis()->FindBin(p);
+          double pim_tbin_gen = pim_gen->GetYaxis()->FindBin(cost);
+          double pim_phibin_gen = pim_gen->GetZaxis()->FindBin(phi*180/TMath::Pi()+redef);
+          double pim_num_gen = pim_gen->GetBinContent(pim_pbin_gen, pim_tbin_gen, pim_phibin_gen);
+          //Find number of accepted events                                                                              
+
+          double pim_pbin_acc = pim_acc->GetXaxis()->FindBin(p);
+          double pim_tbin_acc = pim_acc->GetYaxis()->FindBin(cost);
+          double pim_phibin_acc = pim_acc->GetZaxis()->FindBin(phi*180/TMath::Pi()+redef);
+          double pim_num_acc = pim_acc->GetBinContent(pim_pbin_acc, pim_tbin_acc, pim_phibin_acc);
+          double pim_acc_ratio = (double)pim_num_acc / (double)pim_num_gen;
+          double pim_acc_prr = (double)sqrt(pim_acc_ratio*(1-pim_acc_ratio)) / (double)pim_num_gen;
+	  return pim_acc_ratio;
+	}
+
+return 0.;
 
 }
