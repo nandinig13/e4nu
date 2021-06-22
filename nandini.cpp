@@ -47,6 +47,7 @@ Bool_t res, qel, dis, mec; //is it a RES, QEL, DIS, MEC event?
 //Double_t pxf, pyf, pzf; //final momenta in x, y, z of kth final state particle
 Double_t pxl, pyl, pzl; //final state primary lepton momenta in x, y, z
 //Final state particle variables. Final state = after intranuclear rescattering
+Double_t cthf;
 int pdg; //pdg code of kth final state particle in hadronic system 
 int nfn; //number of final state neutron and antineutron
 int nfp; //number of final state proton and antiproton   
@@ -200,7 +201,7 @@ TFile *f = new TFile(inFileName.c_str());
 //NUMBER OF ENTRIES
 Long64_t nentries = tree->GetEntries();
  if (tester == "test"){
-     nentries = 100;} //for debugging
+     nentries = 100000;} //for debugging
 
   //WHICH LEPTON?
   bool isElectronMode = CheckIfElectrons(tree);
@@ -244,6 +245,7 @@ Long64_t nentries = tree->GetEntries();
   Int_t pdgf[maxNF];
   Double_t pxf[maxNF], pyf[maxNF], pzf[maxNF];
   Double_t Ef[maxNF];
+  Double_t cthf[maxNF];
 
   tree -> SetBranchStatus("*", 0); //sets all the branches off
   tree -> SetBranchStatus("Ev", 1); //turns on the one we care about
@@ -286,6 +288,7 @@ Long64_t nentries = tree->GetEntries();
   tree -> SetBranchStatus("nc", 1);
   tree -> SetBranchStatus("resid",1);
   tree -> SetBranchStatus("em", 1);
+  tree -> SetBranchStatus("cthf", 1);
 
 
   tree -> SetBranchAddress("Ev", &Ev); //puts the variable referenced into the branch called "xxx", they have the same name to make it less confusing
@@ -327,9 +330,12 @@ Long64_t nentries = tree->GetEntries();
   tree -> SetBranchAddress("cc", &cc);
   tree -> SetBranchAddress("nc", &nc);
   tree -> SetBranchAddress("resid" , &resid);
-  int Bins = 280;
-  double Histo_xmax = 12;
+  tree -> SetBranchAddress("cthf", &cthf);
+
+  int Bins = 100;
+  double Histo_xmax = 7;
   
+  /*
   TH1D *hEv = new TH1D("Ev", cutText.c_str(), Bins, 0.0, Histo_xmax); //create a pointer to a histogram
   TH1D *hcal = new TH1D("Cal", "Calorimetric energy reconstruction", Bins, 0.0, Histo_xmax); 
   TH1D *hkin = new TH1D("Kin", "Kinematic energy reconstruction", Bins, 0.0, Histo_xmax);
@@ -365,6 +371,15 @@ Long64_t nentries = tree->GetEntries();
   TH1D *hkin_res_pim = new TH1D("kin_res_pim", "Kinematic energy reconstruction in RES events with 1 pi-", Bins, 0.0, Histo_xmax);
   TH1D *hkin_dis_pim = new TH1D("kin_dis_pim", "Kinematic energy reconstruction in DIS events with 1 pi-", Bins, 0.0, Histo_xmax);
   TH1D *hkin_mec_pim = new TH1D("kin_mec_pim", "Kinematic energy reconstruction in MEC events with 1 pi-", Bins, 0.0, Histo_xmax);
+  */
+
+  TH1D *angle_to_beam = new TH1D("angle_to_beam", "Angle charged pion makes with beam", Bins, 0.0, Histo_xmax);
+  TH1D *angle_to_beam_pim = new TH1D("angle_to_beam_pim", "Angle pi- makes with beam", Bins, 0.0, Histo_xmax);
+  TH1D *angle_to_beam_pip = new TH1D("angle_to_beam_pip", "Angle pi+ makes with beam", Bins, 0.0, Histo_xmax);
+
+  TH2D *theta_phi_pi = new TH2D ("theta_phi_pi", "Theta vs phi of momentum (charged pion)", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
+  TH2D *theta_phi_pim = new TH2D ("theta_phi_pim", "Theta vs phi of momentum (pi-)", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
+  TH2D *theta_phi_pip = new TH2D ("theta_phi_pip", "Theta vs phi of momentum (pi+)", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
 
   // --------- CLAS ACCEPTANCE MAPS -----------------
 //TFile* file_acceptance_1_161 = TFile::Open("maps/e2a_maps_12C_E_1_161.root");
@@ -435,6 +450,8 @@ TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.ro
       double pimPhi = 0;    //phi                                                                                                                                                      
       double Epi = 0;
 
+      double bangle = 0;
+
     for(Int_t k=0; k<nf; k++) { //loop through k final particles
       int pdg = pdgf[k];
       TVector3 kVec(pxf[k], pyf[k], pzf[k]);//momentum vector for kth particle
@@ -447,7 +464,7 @@ TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.ro
 	    pCos = kVec.CosTheta(); 
 	    pPhi = kVec.Phi() + TMath::Pi(); 
 	    protonK = Ef[k] - PROTON_MASS;
-        pCount +=1;
+      pCount +=1;
 	}
       }
 
@@ -456,8 +473,10 @@ TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.ro
 	if (kP > pipP){ // I think this ensures it is using the proton with max energy/momentum
 	  pipP = kP;
 	  pipCos = kVec.CosTheta();
-          pipPhi = kVec.Phi() + TMath::Pi();
-          pipK = Ef[k] - PION_MASS; 
+    pipPhi = kVec.Phi() + TMath::Pi();
+    pipK = Ef[k] - PION_MASS; 
+    bangle = cthf[k];
+
 	}
       }
 //SETTING VALS IF PI MINUS
@@ -467,6 +486,7 @@ TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.ro
         pimCos = kVec.CosTheta();
         pimPhi = kVec.Phi() + TMath::Pi();
         pimK = Ef[k] - PION_MASS;
+        bangle = cthf[k];
         }
       }
     }
@@ -586,8 +606,15 @@ bool clas_acceptance = true;  //might want to pass this as an argument one day
     }
 //cout << passescuts << endl;
     if (passescuts == true){
-  
 
+angle_to_beam->Fill(acos(bangle));
+angle_to_beam_pim->Fill(acos(bangle),weight_pim);
+angle_to_beam_pip->Fill(acos(bangle),weight_pip);
+
+theta_phi_pim->Fill(acos(pimCos), pimPhi, weight_pim);
+theta_phi_pip->Fill(acos(pipCos), pipPhi, weight_pip);
+
+/*
       hcal->Fill(calE, weight);
       hkin->Fill(kinE, weight);
       hEv->Fill(Ev, weight);
@@ -631,6 +658,10 @@ bool clas_acceptance = true;  //might want to pass this as an argument one day
 	hkin_mec_pim -> Fill(kinE, weight_pim);
       }
 
+  */
+
+
+
     } // end if passes cuts
   } // end big loop over entries
 
@@ -657,6 +688,7 @@ bool clas_acceptance = true;  //might want to pass this as an argument one day
   
   TFile *output = new TFile(outFileName.c_str(),"RECREATE"); //makes the file writeable, only 1 file can be open and writeable at a time in ROOT
     
+    /*
     hEv -> Write();
     hcal -> Write();
     hkin -> Write();
@@ -691,6 +723,14 @@ bool clas_acceptance = true;  //might want to pass this as an argument one day
     hkin_res_pim -> Write();
     hkin_dis_pim -> Write();
     hkin_mec_pim -> Write();
+    */
+
+   angle_to_beam->Write();
+   angle_to_beam_pim->Write();
+   angle_to_beam_pip->Write();
+
+   theta_phi_pim->Write();
+   theta_phi_pip->Write();
     
     output -> Close();
 
