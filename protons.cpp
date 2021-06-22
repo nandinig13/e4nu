@@ -137,7 +137,7 @@ TFile *f = new TFile(inFileName.c_str());
 //NUMBER OF ENTRIES
 Long64_t nentries = tree->GetEntries();
  if (tester == "test"){
-     nentries = 10000;} //for debugging
+     nentries = 1000000;} //for debugging
 
   //WHICH LEPTON?
   bool isElectronMode = CheckIfElectrons(tree);
@@ -258,10 +258,10 @@ Long64_t nentries = tree->GetEntries();
   TH1D *hEp_primary = new TH1D("Ep_primary", "Energy of primary proton", Bins, 0.0, Histo_xmax);
   //TH1D *hEp_other = new TH1D("Ep_other", "Energy distribution of secondary protons", Bins, 0.0, Histo_xmax);
   TH1D *hEp_total = new TH1D("Ep_total", "Total proton energy", Bins, 0.0, Histo_xmax);
-  TH2D *hEp_min_max_qe = new TH2D ("Ep_min_max_qe,", "comparing primary and secondary proton energies in qe events", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
-  TH2D *hEp_min_max_res = new TH2D ("Ep_min_max_res,", "comparing primary and secondary proton energies in resonant events", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
-  TH2D *hEp_min_max_mec = new TH2D ("Ep_min_max_mec,", "comparing primary and secondary proton energies in mec events", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
-  TH2D *hEp_min_max_dis = new TH2D ("Ep_min_max_dis,", "comparing primary and secondary proton energies in dis events", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
+  TH2D *hEp_min_max_qe = new TH2D ("Ep_min_max_qe", "comparing primary and secondary proton energies in qe events", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
+  TH2D *hEp_min_max_res = new TH2D ("Ep_min_max_res", "comparing primary and secondary proton energies in resonant events", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
+  TH2D *hEp_min_max_mec = new TH2D ("Ep_min_max_mec", "comparing primary and secondary proton energies in mec events", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
+  TH2D *hEp_min_max_dis = new TH2D ("Ep_min_max_dis", "comparing primary and secondary proton energies in dis events", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
 
 
   gRandom = new TRandom3();
