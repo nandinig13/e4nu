@@ -118,13 +118,16 @@ double acceptance_c(double p, double cost, double phi, int id,TFile* file_accept
 	  //Find number of accepted events                                                                            
 
 	  double pip_pbin_acc = pip_acc->GetXaxis()->FindBin(p);
+	  //cout << "pip_pbin_acc" << pip_pbin_acc << endl;
 	  double pip_tbin_acc = pip_acc->GetYaxis()->FindBin(cost);
+	  //cout << "pip_tbin_acc" << pip_tbin_acc << endl;
 	  double pip_phibin_acc = pip_acc->GetZaxis()->FindBin(phi*180/TMath::Pi()+redef);
+	 // cout << "pip_phibin_acc" << pip_phibin_acc << endl;
 	  double pip_num_acc = pip_acc->GetBinContent(pip_pbin_acc, pip_tbin_acc, pip_phibin_acc);
 	  double pip_acc_ratio = (double)pip_num_acc / (double)pip_num_gen;
 	  double pip_acc_prr = (double)sqrt(pip_acc_ratio*(1-pip_acc_ratio)) / (double)pip_num_gen;
-	  //	  cout<<"acc"<<pip_num_acc<<endl;                                                                       
-	  // cout<<"gen"<<pip_num_gen<<endl;
+	  	//cout<<"acc"<<pip_num_acc<<endl;                                                                       
+	  	//cout<<"gen"<<pip_num_gen<<endl;
 	  return pip_acc_ratio;
         }
         // Pi-                                                                                                                                                                       

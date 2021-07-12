@@ -179,7 +179,7 @@ int pions(string inFileName, string outdir) {
   TTree *tree = (TTree*) f->Get("gst");
   
   Long64_t nentries = tree->GetEntries(); //eset nentries to a small number for troubleshooting
-        nentries = 100; //for debugging only
+        nentries = 1000000; //for debugging only
   
     // Is it electron or neutrino mode?
   bool isElectronMode = CheckIfElectrons(tree);
@@ -480,6 +480,7 @@ int pions(string inFileName, string outdir) {
     double weight = 1.0;
     double weight_pim = 1.0;
     double weight_pip = 1.0;
+    int nonzero = 0;
 
     bool clas_acceptance = true;   
     if (clas_acceptance == true){
@@ -494,10 +495,13 @@ int pions(string inFileName, string outdir) {
 	pim_acc_ratio = acceptance_c(pimP, pimCos, pimPhi, -211, file_acceptance_2_261_pim);
 
   cout << nfpip << endl;
-  cout << "initial weight" << weight_pip << endl;
-  cout << "e_acc" << e_acc_ratio << endl;
-  cout << "p_acc" << p_acc_ratio << endl;
-  cout << "pip_acc" << pip_acc_ratio << endl;
+  //cout << "initial weight" << weight_pip << endl;
+  //cout << "e_acc" << e_acc_ratio << endl;
+  //cout << "p_acc" << p_acc_ratio << endl;
+  //cout << "pip_acc" << pip_acc_ratio << endl;
+  if (pip_acc_ratio != 0){
+    cout << ("non zero") << endl;
+  }
 
 	weight_pip *= e_acc_ratio * p_acc_ratio * pip_acc_ratio;
 
