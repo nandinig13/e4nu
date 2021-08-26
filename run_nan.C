@@ -1,4 +1,4 @@
-#include "nandini.cpp"
+#include "kinematics.cpp"
 #include <string>
 #include <iostream>
 using namespace std;
