@@ -26,7 +26,7 @@ void acceptanceplot()
 
   // Create a TFile object and connect it to your file                                                                  
   //TFile *f = new TFile("energy_reconstruction_gst-nu_carbon.root");                                                   
-  string acceptance_file  = "/unix/dune/e4nu/ngadhia/e2a_maps_12C_E_1_161_pip.root ";
+  string acceptance_file  = "/genie/app/users/ngadhia/scripts/macros/maps/e2a_maps_12C_E_2_261_p.root ";
     // "f" is just a placeholder name at this point                                                                     
 
   TFile *f = new TFile(acceptance_file.c_str());
@@ -34,8 +34,8 @@ void acceptanceplot()
 
   f->ls(); // This will print out a list of histograms in your file     
   
-  //  TString Option = "xy";
-     TString Option = "yz";
+   //TString Option = "xy";
+    TString Option = "yz";
   //  TString Option = "xz";
 
    //x = momentum , y = cos theta,  z = phi
@@ -54,11 +54,11 @@ void acceptanceplot()
     
   TH2D *accrat2D = (TH2D*) (acc2D->Clone());
   accrat2D->Divide(gen2D);
-  accrat2D->SetTitle("pi+ CLAS acceptance for electron scattering on C12 at 1.161GeV");
+  accrat2D->SetTitle("CLAS acceptance for final state proton in electron scattering on C12 at 2.261GeV");
   //accrat2D->GetZaxis()->SetTitle("proton momentum[GeV]");
   //  accrat2D->GetYaxis()->SetTitle("proton momentum[GeV]");
-  accrat2D->GetXaxis()->SetTitle("phi[degrees]");    
-  accrat2D->GetYaxis()->SetTitle("cos theta");
+  accrat2D->GetXaxis()->SetTitle("Phi(Degrees)");    
+  accrat2D->GetYaxis()->SetTitle("Cos theta");
   
   gen2D->SetTitle("CLAS acceptance for electron scattering on C12 at 1.161GeV");
   gen2D->GetYaxis()->SetTitle("electron momentum[GeV]");

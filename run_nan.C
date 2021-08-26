@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
   //write "test" for the third argument to only test 100 entries for debugging
 
   string clas_acceptance = Form("%s", argv[4]);
-  //enter 1 to run with clas acceptance or 0 to run without
+  //enter acc to run with clas acceptance or anything else to run without
   cout << filepath << " " <<outdir << endl;
  
   func(filepath, outdir, tester, clas_acceptance);

@@ -18,23 +18,13 @@
 #include <sstream>
 #include <map>
 #include "acceptance_c.cpp"
+#include "Constants.h"
 
 #include "OscillationHelper.hxx"
 R__LOAD_LIBRARY(WrappedProb3++.20121225.so)
 
 using namespace std;
 
-//PHYSICAL CONSTANTS      //can maybe one day put these in a header                                                        
-const Double_t ELECTRON_MASS= 0.00051099; //Gev 
-const Double_t MUON_MASS= 0.105658; //Gev     
-const Double_t BEAM_ENERGY = 2.261; //GeV  //Change for different beam energies
-const Double_t Eb = 0.025;//binding energies from Afro: 0.025 for 12C, 0.04 for 40Ar, 0.03 for 56Fe NEED TO CHECK VALIDITY                                                          
-const Double_t PROTON_MASS =  0.938272; //mass of proton                                           
-const Double_t NEUTRON_MASS =  0.939565; //mass of neutron                                        
-const Double_t PION_MASS = 0.13958; //mass of charged pion 
-const Double_t DELTA_MASS = 1.232; //mass of delta state                                                                 
-const Double_t NEUTRAL_PION_MASS = 0.13498; //(GeV/c^2) mass of neutral pion                                                                                
-const Double_t FINE_STRUCTURE_CONSTANT = 1./137.035999139; 
 
 //GLOBAL VARIABLES FROM TREE - SEE WORD DOC
 Double_t Ev; //incoming lepton energy
@@ -140,7 +130,7 @@ bool Cut::PassesCut()
   //bool _cutID = true; 
   switch (cutID_)
   {
-    case FINAL_STATE_CHARGED_PION_CUT: return  (nfpim + nfpip == 1); 
+    case FINAL_STATE_CHARGED_PION_CUT: return  (nfpim + nfpip > 0); 
          break; // 1 final state pion
     case FINAL_STATE_NEUTRAL_PION_CUT: return (nfpi0 ==1);
        break;
@@ -183,9 +173,10 @@ string GetTargetString(TTree *tree)
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+const double_t BEAM_ENERGY = 2.261;// CHANGE AS REQUIRED
 
 //MAIN FUNCTION
-int func (string inFileName, string outdir, string tester){ //not taking in any complicated parameters yet
+int func (string inFileName, string outdir, string tester,  string acceptance){ //not taking in any complicated parameters yet
 
   //FILEPATH = filepath ... maybe try and cout without the whole path to look nicer
   cout << "ROOT file being analysed:" << inFileName << endl;
@@ -215,12 +206,28 @@ Long64_t nentries = tree->GetEntries();
   cout<<"Number of entries:" << nentries << endl;
   cout<<endl;
 
+  //SET BINDING ENERGY ACCORDINGLY
+  double_t Eb = 0;
+  if (targetString == "carbon"){
+    Eb = C12_bind_en;
+  }
+  if (targetString == "iron"){
+    Eb = He4_bind_en;
+  }
+  if (targetString == "helium"){
+    Eb = Fe_bind_en;
+  }
+  if (Eb == 0){
+    cout << "Binding energy not set!" << endl;
+  }
+  
+
 //CUTS
   vector<Cut*> cuts;
     //cuts.push_back(new Cut("Bjorken x cut","TMath::Abs(x-1) < 0.2")); 
     //cuts.push_back(new Cut("1p" , "1p", FINAL_STATE_PROTON_CUT));
     cuts.push_back(new Cut(">= 1p" , ">= 1p", FINAL_STATE_PROTON_CUT));
-    cuts.push_back(new Cut("1pi" , "1pi", FINAL_STATE_CHARGED_PION_CUT)); //make sure 
+    cuts.push_back(new Cut(">1pi" , ">1pi", FINAL_STATE_CHARGED_PION_CUT)); //make sure 
    // cuts.push_back(new Cut("0n" , "0n", FINAL_STATE_NEUTRON_CUT));
    // cuts.push_back(new Cut("0pi0", "0pi0", FINAL_STATE_NEUTRAL_PION_CUT));
 
@@ -335,7 +342,7 @@ Long64_t nentries = tree->GetEntries();
   int Bins = 100;
   double Histo_xmax = 7;
   
-  /*
+  
   TH1D *hEv = new TH1D("Ev", cutText.c_str(), Bins, 0.0, Histo_xmax); //create a pointer to a histogram
   TH1D *hcal = new TH1D("Cal", "Calorimetric energy reconstruction", Bins, 0.0, Histo_xmax); 
   TH1D *hkin = new TH1D("Kin", "Kinematic energy reconstruction", Bins, 0.0, Histo_xmax);
@@ -371,16 +378,17 @@ Long64_t nentries = tree->GetEntries();
   TH1D *hkin_res_pim = new TH1D("kin_res_pim", "Kinematic energy reconstruction in RES events with 1 pi-", Bins, 0.0, Histo_xmax);
   TH1D *hkin_dis_pim = new TH1D("kin_dis_pim", "Kinematic energy reconstruction in DIS events with 1 pi-", Bins, 0.0, Histo_xmax);
   TH1D *hkin_mec_pim = new TH1D("kin_mec_pim", "Kinematic energy reconstruction in MEC events with 1 pi-", Bins, 0.0, Histo_xmax);
-  */
 
-  TH1D *angle_to_beam = new TH1D("angle_to_beam", "Angle charged pion makes with beam", Bins, 0.0, Histo_xmax);
+  TH1D *hENeut = new TH1D("ENeut", "Energy distribution of primary allowed neutron", Bins, 0.0, Histo_xmax); 
+
+/*
+  TH1D *angle_to_beam_pi = new TH1D("angle_to_beam", "Angle charged pion makes with beam", Bins, 0.0, Histo_xmax);
   TH1D *angle_to_beam_pim = new TH1D("angle_to_beam_pim", "Angle pi- makes with beam", Bins, 0.0, Histo_xmax);
   TH1D *angle_to_beam_pip = new TH1D("angle_to_beam_pip", "Angle pi+ makes with beam", Bins, 0.0, Histo_xmax);
-
-  TH2D *theta_phi_pi = new TH2D ("theta_phi_pi", "Theta vs phi of momentum (charged pion)", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
-  TH2D *theta_phi_pim = new TH2D ("theta_phi_pim", "Theta vs phi of momentum (pi-)", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
-  TH2D *theta_phi_pip = new TH2D ("theta_phi_pip", "Theta vs phi of momentum (pi+)", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
-
+  TH1D *hpi_to_prot_angle = new TH1D("hpi_to_prot_angle", "Angle charged pion makes with proton", Bins, 0.0, Histo_xmax);
+  TH1D *hpi_to_prot_angle_pip = new TH1D("hpi_to_prot_angle", "Angle charged pion makes with proton", Bins, 0.0, Histo_xmax);
+  TH1D *hpi_to_prot_angle_pim = new TH1D("hpi_to_prot_angle", "Angle charged pion makes with proton", Bins, 0.0, Histo_xmax);
+*/
   // --------- CLAS ACCEPTANCE MAPS -----------------
 //TFile* file_acceptance_1_161 = TFile::Open("maps/e2a_maps_12C_E_1_161.root");
 //TFile* file_acceptance_1_161_p = TFile::Open("maps/e2a_maps_12C_E_1_161_p.root");
@@ -406,6 +414,9 @@ TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.ro
   int tgtproton = 0;
   int tgtneutron = 0;
   int tgtother =0;
+
+     int pCount = 0; //counting protons
+    int nCount = 0; //counting neutrons
 
   for( Long64_t i = 0; i < nentries ; i++)
   {
@@ -438,7 +449,13 @@ TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.ro
       double protonK = 0; //proton kinetic energy
       double pCos = 0;    //cosine of scattering angle 
       double pPhi = 0;    //phi
-      int pCount = 0;
+   
+
+        double nP = 0;      //proton momentum
+      double neutronK = 0; //proton kinetic energy
+      double nCos = 0;    //cosine of scattering angle 
+      double nPhi = 0;    //phi
+    
 
       double pipP = 0;      //pion+ momentum                                                       
       double pipK = 0;   //pion+ kinetic energy                                                  
@@ -451,7 +468,8 @@ TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.ro
       double pimPhi = 0;    //phi                                                                                                                                                      
       double Epi = 0;
 
-      double bangle = 0;
+      TVector3 mom_pi;
+      TVector3 mom_prot;
 
     for(Int_t k=0; k<nf; k++) { //loop through k final particles
       int pdg = pdgf[k];
@@ -465,9 +483,19 @@ TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.ro
 	    pCos = kVec.CosTheta(); 
 	    pPhi = kVec.Phi() + TMath::Pi(); 
 	    protonK = Ef[k] - PROTON_MASS;
-      pCount +=1;
+      mom_prot = kVec;
 	}
       }
+
+      if (pdg == 2112) {
+	    if (kP > nP) {
+	    nP = kP;
+	    nCos = kVec.CosTheta(); 
+	    nPhi = kVec.Phi() + TMath::Pi(); 
+	    neutronK = Ef[k] - NEUTRON_MASS;
+	}
+      }
+
 
 //SETTING VALS IF PI PLUS
       if (pdg == 211) {
@@ -476,7 +504,7 @@ TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.ro
 	  pipCos = kVec.CosTheta();
     pipPhi = kVec.Phi() + TMath::Pi();
     pipK = Ef[k] - PION_MASS; 
-    bangle = cthf[k];
+    mom_pi = kVec;
 
 	}
       }
@@ -487,7 +515,7 @@ TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.ro
         pimCos = kVec.CosTheta();
         pimPhi = kVec.Phi() + TMath::Pi();
         pimK = Ef[k] - PION_MASS;
-        bangle = cthf[k];
+        mom_pi = kVec;
         }
       }
     }
@@ -515,6 +543,7 @@ TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.ro
     double smear_pipP = 0;
     double smear_pimP = 0;
     double smear_Epi = 0 ;
+
     
     if (nfpip ==1){
       smear_pipP = gRandom->Gaus(pipP,reso_pi*pipP);
@@ -548,6 +577,9 @@ TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.ro
     double weight_pim = 0.0;
     double weight_pip = 0.0;
    
+  if (smear_pK<0.3){
+    weight = 0.0;
+  }
 
   if (nfpip == 1){
     weight_pip=1.0;    
@@ -555,9 +587,8 @@ TFile* file_acceptance_2_261_pim = TFile::Open("maps/e2a_maps_12C_E_2_261_pim.ro
   if (nfpim == 1){
     weight_pim=1.0;
   }
-/*
-bool clas_acceptance = true;  //might want to pass this as an argument one day
-    if (clas_acceptance == true){
+
+    if (acceptance == "acc"){
       double e_acc_ratio = 1.0;
       double p_acc_ratio = 1.0;
       double pip_acc_ratio = 1.0;
@@ -568,26 +599,15 @@ bool clas_acceptance = true;  //might want to pass this as an argument one day
 	pip_acc_ratio = acceptance_c(pipP, pipCos, pipPhi, 211, file_acceptance_2_261_pip);
 	pim_acc_ratio = acceptance_c(pimP, pimCos, pimPhi, -211, file_acceptance_2_261_pim);
 
-  cout << nfpip << endl;
-  cout << "initial weight" << weight_pip << endl;
-  cout << "e_acc" << e_acc_ratio << endl;
-  cout << "p_acc" << p_acc_ratio << endl;
-  cout << "pip_acc" << pip_acc_ratio << endl;
-
 	weight_pip *= e_acc_ratio * p_acc_ratio * pip_acc_ratio;
 
 	weight_pim *= e_acc_ratio * p_acc_ratio * pim_acc_ratio;
 
-  cout << "final weight" << weight_pip << endl;
+  cout << "proton: " << p_acc_ratio<< endl;
+  cout << "pip: " << pip_acc_ratio<< endl;
+  cout << "pim: " << pim_acc_ratio<< endl;
   cout << endl;
     }
-    */
-
-//cout << "plus:" << nfpip << endl;
-//cout << weight_pip << endl;
-//cout << endl;
-//cout << "minus" << nfpim << endl;
-//cout << weight_pim << endl;
 
 // MAKING THE CUTS
     string cutString="";
@@ -608,14 +628,19 @@ bool clas_acceptance = true;  //might want to pass this as an argument one day
 //cout << passescuts << endl;
     if (passescuts == true){
 
-angle_to_beam->Fill(acos(bangle));
-angle_to_beam_pim->Fill(acos(bangle),weight_pim);
-angle_to_beam_pip->Fill(acos(bangle),weight_pip);
-
-theta_phi_pim->Fill(acos(pimCos), pimPhi, weight_pim);
-theta_phi_pip->Fill(acos(pipCos), pipPhi, weight_pip);
-
 /*
+double_t pi_to_prot_angle = mom_prot.Angle(mom_pi);
+
+angle_to_beam_pi->Fill(acos(pipCos), weight_pip);
+angle_to_beam_pi->Fill(acos(pimCos), weight_pim);
+
+angle_to_beam_pim->Fill(acos(pimCos),weight_pim);
+angle_to_beam_pip->Fill(acos(pipCos),weight_pip);
+hpi_to_prot_angle -> Fill(pi_to_prot_angle);
+hpi_to_prot_angle_pim -> Fill(pi_to_prot_angle, weight_pim);
+hpi_to_prot_angle_pip -> Fill(pi_to_prot_angle, weight_pip);
+
+*/
       hcal->Fill(calE, weight);
       hkin->Fill(kinE, weight);
       hEv->Fill(Ev, weight);
@@ -657,12 +682,19 @@ theta_phi_pip->Fill(acos(pipCos), pipPhi, weight_pip);
   hkin_mec_pip -> Fill(kinE, weight_pip);
   hcal_mec_pim -> Fill(calE, weight_pim);
 	hkin_mec_pim -> Fill(kinE, weight_pim);
+
+  hENeut-> Fill(nP, weight);
       }
 
-  */
 
+//COUNTING SIGNAL EVENTS
 
-
+if (weight != 0){
+  if (neutronK > 0.3) {
+    nCount += 1;
+  }
+  pCount +=1 ;
+}
     } // end if passes cuts
   } // end big loop over entries
 
@@ -673,10 +705,14 @@ theta_phi_pip->Fill(acos(pipCos), pipPhi, weight_pip);
 	std::cout << std::endl << "MEC Fractional Contribution = " << int(double(MECSignalEvents) / double(nentries)*100.) << " \%" << std::endl;
 	std::cout << std::endl << "RES Fractional Contribution = " << int(double(RESSignalEvents) / double(nentries)*100.) << " \%" << std::endl;
 	std::cout << std::endl << "DIS Fractional Contribution = " << int(double(DISSignalEvents) / double(nentries)*100.) << " \%" << std::endl;
-
+  cout << endl;
   std::cout << "Proportion of protons hit" << int((double(tgtproton)/ double(nentries)) *100.) << std::endl;
   std::cout << "Proportion of neutrons hit" << int((double(tgtneutron)/ double(nentries)) *100.) << std::endl;
   std::cout << "Proportion of other hit" << int((double(tgtother)/ double(nentries)) *100.) << std::endl;
+  cout << endl;
+
+  cout << "number of primary protons above threshold = " << pCount << endl;
+  cout << "number of allowed neutrons above threshold = " << nCount << endl;
 
   //string targetString = GetTargetString(tree);
   string  PATH = "nanPlots/" + outdir;
@@ -688,7 +724,7 @@ theta_phi_pip->Fill(acos(pipCos), pipPhi, weight_pip);
   
   TFile *output = new TFile(outFileName.c_str(),"RECREATE"); //makes the file writeable, only 1 file can be open and writeable at a time in ROOT
     
-    /*
+    
     hEv -> Write();
     hcal -> Write();
     hkin -> Write();
@@ -723,15 +759,18 @@ theta_phi_pip->Fill(acos(pipCos), pipPhi, weight_pip);
     hkin_res_pim -> Write();
     hkin_dis_pim -> Write();
     hkin_mec_pim -> Write();
-    */
+    
+    hENeut -> Write();
 
-   angle_to_beam->Write();
+  /*
+   angle_to_beam_pi->Write();
    angle_to_beam_pim->Write();
    angle_to_beam_pip->Write();
+   hpi_to_prot_angle->Write();
+   hpi_to_prot_angle_pip->Write();
+   hpi_to_prot_angle_pim->Write();
+  */
 
-   theta_phi_pim->Write();
-   theta_phi_pip->Write();
-    
     output -> Close();
 
  

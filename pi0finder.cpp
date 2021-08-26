@@ -137,7 +137,7 @@ TFile *f = new TFile(inFileName.c_str());
 //NUMBER OF ENTRIES
 Long64_t nentries = tree->GetEntries();
  if (tester == "test"){
-     nentries = 1000000;} //for debugging
+     nentries = 10000;} //for debugging
 
   //WHICH LEPTON?
   bool isElectronMode = CheckIfElectrons(tree);
@@ -251,96 +251,71 @@ Long64_t nentries = tree->GetEntries();
   tree -> SetBranchAddress("nc", &nc);
   tree -> SetBranchAddress("resid" , &resid);
   int Bins = 280;
-  double Histo_xmax = 3;
+  double Histo_xmax = 10;
   
   //making histograms
-  TH1D *hEp = new TH1D("Ep", "Proton energies", Bins, 0.0, Histo_xmax); //create a pointer to a histogram
-  TH1D *hEp_primary = new TH1D("Ep_primary", "Energy of primary proton", Bins, 0.0, Histo_xmax);
-  TH1D *hEp_secondary = new TH1D("Ep_secondary", "Energy of secondary proton", Bins, 0.0, Histo_xmax);
-  //TH1D *hEp_other = new TH1D("Ep_other", "Energy distribution of secondary protons", Bins, 0.0, Histo_xmax);
-  TH1D *hEp_total = new TH1D("Ep_total", "Total proton energy", Bins, 0.0, Histo_xmax);
-  TH2D *hEp_min_max_qe = new TH2D ("Ep_min_max_qe", "comparing primary and secondary proton energies in qe events", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
-  TH2D *hEp_min_max_res = new TH2D ("Ep_min_max_res", "comparing primary and secondary proton energies in resonant events", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
-  TH2D *hEp_min_max_mec = new TH2D ("Ep_min_max_mec", "comparing primary and secondary proton energies in mec events", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
-  TH2D *hEp_min_max_dis = new TH2D ("Ep_min_max_dis", "comparing primary and secondary proton energies in dis events", Bins, 0.0, Histo_xmax, Bins, 0.0, Histo_xmax);
-
+  TH1D *hEpi0 = new TH1D("Epi0", "Energy of neutral pion", Bins, 0.0, Histo_xmax);
+  TH1D *hEpi0_res = new TH1D("Epi0_res", "Energy of neutral pion in resonant events", Bins, 0.0, Histo_xmax);
+  TH1D *hEpi0_thresh = new TH1D("Epi0_thresh", "Energy of neutral pion above angle threshold", Bins, 0.0, Histo_xmax);
 
   gRandom = new TRandom3();
   gRandom->SetSeed(10);
   
+  int pi0_count = 0;
+  int pi0_thresh =0;
+
   for( Long64_t i = 0; i < nentries ; i++){
+  if (i%1000){
+    //cout << "running" << endl;
+  }
   //cout<<"Iteration: "<< i << endl;
   //cout<<"No. of final state particles: " << nf << endl;
   
       tree -> GetEntry(i);
 //Initialise proton information
-      double pP = 0;      //proton momentum
-      double protonK = 0; //proton kinetic energy
-      double pCos = 0;    //cosine of scattering angle 
-      double pPhi = 0;    //phi
-      int pCount = 0;
-      double Ep_max = 0; //energy of the proton with max energy
-      double Ep_min=999999999;
-      double tot = 0; //summing up proton energies
+    double pi0P = 0;      //pion momentum                                                       
+    double pi0K = 0;   //pion kinetic energy                                                  
+    double pi0Cos = 0;    //cosine of scattering angle                                             
+    double pi0Phi = 0;    //phi 
 
     for(Int_t k=0; k<nf; k++) { //loop through k final particles
       int pdg = pdgf[k];
       TVector3 kVec(pxf[k], pyf[k], pzf[k]);//momentum vector for kth particle
       double kP = kVec.Mag();
 
-//SETTING VALS IF PROTON
-      if (pdg == 2212) {
-	    if (kP > pP) {
-	    pP = kP;
-	    pCos = kVec.CosTheta(); 
-	    pPhi = kVec.Phi() + TMath::Pi(); 
-	    protonK = Ef[k] - PROTON_MASS;
-      pCount +=1;
-      tot += Ef[k];
-      if (Ef[k] > Ep_max){
-      Ep_max = Ef[k];
-      };
+if (pdg == 111) {
+  pi0_count +=1;
+	if (kP > pi0P){ // I think this ensures it is using the proton with max energy/momentum
+	  pi0P = kP;
+	  pi0Cos = kVec.CosTheta();
+    pi0Phi = kVec.Phi() + TMath::Pi();
+    pi0K = Ef[k] - PION_MASS;
 
-      if (Ef[k] < Ep_min){
-      Ep_min = Ef[k];
-      }; 
- 
-	};
-  }
+    if (Ef[k] > 0){
+    hEpi0->Fill(Ef[k]);
 
-};   // end loop iterating over final state particles
- 
-if (pCount == 2){
-  if (Ep_max!=0 && Ep_max > 0.25 && Ep_min > 0.25)
-    {
-      //cout << Ep_max << endl;
-      //cout << Ep_min << endl;
-      //cout << endl;
-      hEp -> Fill(Ep_max, 1.0);
-      hEp_primary -> Fill(Ep_max-0.938);
-      hEp_secondary -> Fill(Ep_min - 0.938);
-      if (qel == true){
-      hEp_min_max_qe -> Fill((Ep_max-0.938), (Ep_min-0.938));
-  
+    if (res==1){
+      hEpi0_res -> Fill(Ef[k]);
+    }
 
-      }
-      if (res == true){
-      hEp_min_max_res -> Fill((Ep_max-0.938), (Ep_min-0.938));
-
-      }
-      if (dis == true){
-      hEp_min_max_mec -> Fill((Ep_max-0.938), (Ep_min-0.938));
-
-      }
-      if (mec == true){
-      hEp_min_max_dis -> Fill((Ep_max-0.938), (Ep_min-0.938));
- 
-
-      }
+       if ((acos(pi0Cos))>0.785){
       
+      hEpi0_thresh -> Fill(Ef[k]);
+      if (Ef[k] > 0.6){
+      pi0_thresh+=1;
       }
-            
+  }
+    } //end>0
+
+ 
+	}
 }
+
+
+
+
+
+};   // end loop iterating over final state particles      
   }; //end loop iterating over entries
   
     delete gRandom;
@@ -350,17 +325,29 @@ if (pCount == 2){
   string filename_nopath = inFileName.substr(inFileName.find_last_of("/")+1); //gets filename from filepath
   string outFileName = PATH+string(filename_nopath);
   TFile *output = new TFile(outFileName.c_str(),"RECREATE"); //makes the file writeable, only 1 file can be open and writeable at a time in ROOT
-    hEp -> Write();
-    hEp_primary -> Write();
-    hEp_secondary -> Write();
-    hEp_min_max_qe -> Write();
-    hEp_min_max_res -> Write();
-    hEp_min_max_mec -> Write();
-    hEp_min_max_dis -> Write();
-   
-    
+    hEpi0_res -> Write();
+    hEpi0 -> Write();
+    hEpi0_thresh -> Write();
+
     output -> Close();
  
+ Long64_t nentries_final_single = tree->GetEntries("nfpi0==1");
+ std::cout << std::endl << "single pi0 in fs= " << int(double(nentries_final_single) / double(nentries) *100.) << " \%" << std::endl;
+ Long64_t nentries_final_plural = tree->GetEntries("nfpi0>1");
+ std::cout << std::endl << "multiple pi0 in fs= " << int(double(nentries_final_plural) / double(nentries) *100.) << " \%" << std::endl;
+
+ Long64_t nentries_initial_single = tree->GetEntries("nipi0==1");
+ std::cout << std::endl << "single pi0 in init= " << int(double(nentries_initial_single) / double(nentries) *100.) << " \%" << std::endl;
+ Long64_t nentries_initial_plural = tree->GetEntries("nipi0>1");
+ std::cout << std::endl << "multiple pi0 in init= " << int(double(nentries_initial_plural) / double(nentries) *100.) << " \%" << std::endl;
+
+cout << pi0_count << "= no of pis overall" << endl;
+ 
+ cout << pi0_thresh << "= no of pis above threshold";
+
+std::cout << std::endl << "above/nentries=  " << int(double(pi0_thresh) / double(nentries) *100.) << " \%" << std::endl;
+std::cout << std::endl << "above/all = " << int(double(pi0_thresh) / double(nentries) *100.) << " \%" << std::endl;
+
  cout << "Histograms filled. Output closed!" << endl;
  return 0;
 

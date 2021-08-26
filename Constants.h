@@ -43,4 +43,13 @@
 
 	const int RotCounterLimit = 100;
 
+const Double_t ELECTRON_MASS= 0.00051099; //Gev 
+const Double_t MUON_MASS= 0.105658; //Gev                                                               
+const Double_t PROTON_MASS =  0.938272; //mass of proton                                           
+const Double_t NEUTRON_MASS =  0.939565; //mass of neutron                                        
+const Double_t PION_MASS = 0.13958; //mass of charged pion 
+const Double_t DELTA_MASS = 1.232; //mass of delta state                                                                 
+const Double_t NEUTRAL_PION_MASS = 0.13498; //(GeV/c^2) mass of neutral pion                                                                                
+const Double_t FINE_STRUCTURE_CONSTANT = 1./137.035999139; 
+
 #endif
